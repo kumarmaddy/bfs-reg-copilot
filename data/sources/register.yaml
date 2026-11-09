@@ -1,0 +1,246 @@
+# Source and licence register: the system of record for what may be ingested and why.
+# Validated in CI by `reg-register validate` (rules in src/bfs_reg_copilot/registry/models.py).
+# Corpus text is NEVER committed to this repository (ADR-0007). Only URLs and metadata live here.
+#
+# Verification provenance for the entries dated 2026-11-08:
+#   method "automated fetch and summary" = pages were opened with a web-fetch tool whose output
+#   is a machine summary, not a human reading. The owner confirms each ingestible entry at
+#   Gate 1 (docs/08-gate-0-1-checklist.md) by opening the page and the terms page.
+version: 1
+updated_on: 2026-11-08
+
+sources:
+  - id: A-OSFI-E23
+    title: "Guideline E-23 - Model Risk Management (2027)"
+    issuer: "Office of the Superintendent of Financial Institutions (OSFI)"
+    jurisdiction: CA
+    pack: A
+    doc_type: guideline
+    url: https://www.osfi-bsif.gc.ca/en/guidance/guidance-library/guideline-e-23-model-risk-management-2027
+    source_format: html
+    language: en
+    status: final
+    published_date: 2025-09-11
+    last_modified_observed: 2025-09-11
+    effective_date: 2027-05-01
+    terms_url: https://www.osfi-bsif.gc.ca/en/terms-conditions
+    reproduction_class: non_commercial_with_attribution
+    terms_summary: >-
+      Non-commercial reproduction is allowed without further permission if accuracy is ensured,
+      the full title and author are named, and the copy states it is based on the version at the
+      original URL. Commercial redistribution needs prior written permission from OSFI.
+      Modification, adaptation and translation are not addressed.
+    attribution_required: true
+    attribution_template: >-
+      Based on "{title}", {issuer}, version available at {url} (retrieved {retrieved_on}).
+      Not produced in affiliation with, or endorsed by, OSFI or the Government of Canada.
+    ingest_allowed: true
+    redistribute_in_repo: false
+    verification:
+      primary_page_opened: true
+      terms_verified_on: 2026-11-08
+      method: automated fetch and summary of the guideline page and the OSFI terms page
+      notes: >-
+        Visible "Date modified" is 2025-09-11 but page metadata shows dcterms.modified
+        2026-10-15. Re-check for amendments at Phase 1 ingest and record the version hash.
+    notes: "Replaces the 2017 E-23. Applies to all FRFIs and explicitly includes AI/ML models."
+
+  - id: A-OSFI-B10
+    title: "Guideline B-10 - Third-Party Risk Management"
+    issuer: "Office of the Superintendent of Financial Institutions (OSFI)"
+    jurisdiction: CA
+    pack: A
+    doc_type: guideline
+    url: https://www.osfi-bsif.gc.ca/en/guidance/guidance-library/third-party-risk-management-guideline
+    source_format: html
+    language: en
+    status: final
+    effective_date: 2024-05-01
+    terms_url: https://www.osfi-bsif.gc.ca/en/terms-conditions
+    reproduction_class: non_commercial_with_attribution
+    terms_summary: >-
+      Same OSFI site terms as A-OSFI-E23: non-commercial reproduction with accuracy care, title
+      and author, and a statement of the original URL; commercial redistribution needs permission.
+    attribution_required: true
+    attribution_template: >-
+      Based on "{title}", {issuer}, version available at {url} (retrieved {retrieved_on}).
+      Not produced in affiliation with, or endorsed by, OSFI or the Government of Canada.
+    ingest_allowed: true
+    redistribute_in_repo: false
+    verification:
+      primary_page_opened: true
+      terms_verified_on: 2026-11-08
+      method: automated fetch and summary of the guideline page and the OSFI terms page
+      notes: >-
+        Effective date 2024-05-01 comes from a law-firm summary (Torys, March 2024), not from the
+        page itself. Confirm on the page at Gate 1.
+    notes: "Does not mention AI or LLMs; its general third-party and cloud expectations apply."
+
+  - id: A-OSFI-B13
+    title: "Guideline B-13 - Technology and Cyber Risk Management"
+    issuer: "Office of the Superintendent of Financial Institutions (OSFI)"
+    jurisdiction: CA
+    pack: A
+    doc_type: guideline
+    url: https://www.osfi-bsif.gc.ca/en/guidance/guidance-library/technology-cyber-risk-management
+    source_format: html
+    language: en
+    status: final
+    effective_date: 2024-01-01
+    terms_url: https://www.osfi-bsif.gc.ca/en/terms-conditions
+    reproduction_class: non_commercial_with_attribution
+    terms_summary: >-
+      Same OSFI site terms as A-OSFI-E23: non-commercial reproduction with accuracy care, title
+      and author, and a statement of the original URL; commercial redistribution needs permission.
+    attribution_required: true
+    attribution_template: >-
+      Based on "{title}", {issuer}, version available at {url} (retrieved {retrieved_on}).
+      Not produced in affiliation with, or endorsed by, OSFI or the Government of Canada.
+    ingest_allowed: true
+    redistribute_in_repo: false
+    verification:
+      primary_page_opened: true
+      terms_verified_on: 2026-11-08
+      method: automated fetch and summary of the guideline page and the OSFI terms page
+      notes: "Effective date confirmed from OSFI's 2022 release letter. Three domains, 17 principles."
+    notes: "Guideline text does not mention AI; general references to emerging technologies only."
+
+  - id: B-FINTRAC-STR
+    title: "Reporting suspicious transactions to FINTRAC"
+    issuer: "Financial Transactions and Reports Analysis Centre of Canada (FINTRAC)"
+    jurisdiction: CA
+    pack: B
+    doc_type: guidance
+    url: https://fintrac-canafe.canada.ca/guidance-directives/transaction-operation/str-dod/str-dod-eng
+    source_format: html
+    language: en
+    status: final
+    published_date: 2024-04-08
+    last_modified_observed: 2025-05-22
+    terms_url: https://www.canada.ca/en/transparency/terms.html
+    reproduction_class: non_commercial_with_attribution
+    terms_summary: >-
+      Canada.ca general terms: non-commercial reproduction without further permission with due
+      diligence on accuracy, full title and author credited, and a statement that the copy is based
+      on the version at the original URL. Commercial redistribution needs written permission.
+    attribution_required: true
+    attribution_template: >-
+      Based on "{title}", {issuer}, version available at {url} (retrieved {retrieved_on}).
+      Not produced in affiliation with, or endorsed by, FINTRAC or the Government of Canada.
+    ingest_allowed: false
+    blocking_reason: >-
+      The fetch was truncated before the page footer, so a FINTRAC-specific terms notice was not
+      seen. Open the page footer, confirm which terms link it uses, then set verification and
+      ingest_allowed.
+    redistribute_in_repo: false
+    verification:
+      primary_page_opened: true
+      terms_verified_on: null
+      method: automated fetch (first 100,000 of 161,020 characters) plus Canada.ca terms page
+      notes: "Replaces two archived FINTRAC guidance pages (what is an STR; reporting STRs)."
+    notes: "Related: compliance program requirements and risk assessment guidance."
+
+  - id: B-FINTRAC-CPR
+    title: "FINTRAC compliance program requirements"
+    issuer: "Financial Transactions and Reports Analysis Centre of Canada (FINTRAC)"
+    jurisdiction: CA
+    pack: B
+    doc_type: guidance
+    url: https://fintrac-canafe.canada.ca/guidance-directives/compliance-conformite/Guide4/4-eng
+    source_format: html
+    language: en
+    status: final
+    terms_url: https://www.canada.ca/en/transparency/terms.html
+    reproduction_class: unverified
+    terms_summary: >-
+      Presumed to follow the Canada.ca general terms, but this page has not been opened, so the
+      assumption is unverified.
+    attribution_required: true
+    attribution_template: >-
+      Based on "{title}", {issuer}, version available at {url} (retrieved {retrieved_on}).
+      Not produced in affiliation with, or endorsed by, FINTRAC or the Government of Canada.
+    ingest_allowed: false
+    blocking_reason: "URL taken from a link on the STR page; the page itself has not been opened."
+    redistribute_in_repo: false
+    verification:
+      primary_page_opened: false
+      method: link seen on B-FINTRAC-STR
+    notes: ""
+
+  - id: B-FINTRAC-RBA
+    title: "FINTRAC risk assessment guidance"
+    issuer: "Financial Transactions and Reports Analysis Centre of Canada (FINTRAC)"
+    jurisdiction: CA
+    pack: B
+    doc_type: guidance
+    url: https://fintrac-canafe.canada.ca/guidance-directives/compliance-conformite/rba/rba-eng
+    source_format: html
+    language: en
+    status: final
+    terms_url: https://www.canada.ca/en/transparency/terms.html
+    reproduction_class: unverified
+    terms_summary: >-
+      Presumed to follow the Canada.ca general terms, but this page has not been opened, so the
+      assumption is unverified.
+    attribution_required: true
+    attribution_template: >-
+      Based on "{title}", {issuer}, version available at {url} (retrieved {retrieved_on}).
+      Not produced in affiliation with, or endorsed by, FINTRAC or the Government of Canada.
+    ingest_allowed: false
+    blocking_reason: "URL taken from a link on the STR page; the page itself has not been opened."
+    redistribute_in_repo: false
+    verification:
+      primary_page_opened: false
+      method: link seen on B-FINTRAC-STR
+    notes: ""
+
+pending:
+  - id: A-OSFI-E21
+    title: "Guideline E-21 - Operational Risk and Resilience (status to confirm)"
+    issuer: "Office of the Superintendent of Financial Institutions (OSFI)"
+    pack: A
+    why_pending: >-
+      OSFI launched a consultation on an enhanced E-21 covering operational resilience. Whether a
+      final version has been issued, and its effective date, is not confirmed.
+    next_action: "Check the OSFI guidance library for the final E-21 and its effective date."
+
+  - id: A-OSFI-INCIDENT
+    title: "Technology and Cyber Security Incident Reporting Advisory"
+    issuer: "Office of the Superintendent of Financial Institutions (OSFI)"
+    pack: A
+    why_pending: "Referenced by B-10 for incident notification; not yet opened or assessed."
+    next_action: "Open the advisory, confirm the current version, then add as a source."
+
+  - id: A-OSFI-CORPGOV
+    title: "Corporate Governance Guideline"
+    issuer: "Office of the Superintendent of Financial Institutions (OSFI)"
+    pack: A
+    why_pending: "Named as complementary guidance to B-13; relevance to the assistant is unassessed."
+    next_action: "Decide whether it adds value for the gold set; if yes, verify and add."
+
+  - id: B-PCMLTFA
+    title: "Proceeds of Crime (Money Laundering) and Terrorist Financing Act and Regulations"
+    issuer: "Government of Canada (Justice Laws)"
+    pack: B
+    why_pending: >-
+      Statutes and regulations on the Justice Laws site fall under separate reproduction rules
+      (the Reproduction of Federal Law Order), which have not been reviewed.
+    next_action: "Read the Justice Laws terms and the Order; decide whether to include."
+
+  - id: C-ECFR-REGE
+    title: "Regulation E (Electronic Fund Transfers), 12 CFR Part 1005"
+    issuer: "Consumer Financial Protection Bureau via eCFR"
+    pack: C
+    why_pending: >-
+      Pack C is scheduled for Phase 3. The citation is from memory and must be confirmed against
+      the eCFR before use.
+    next_action: "Confirm the part number and eCFR API access in Phase 3."
+
+  - id: C-ECFR-REGZ
+    title: "Regulation Z (Truth in Lending), 12 CFR Part 1026"
+    issuer: "Consumer Financial Protection Bureau via eCFR"
+    pack: C
+    why_pending: >-
+      Pack C is scheduled for Phase 3. The citation is from memory and must be confirmed against
+      the eCFR before use.
+    next_action: "Confirm the part number and eCFR API access in Phase 3."

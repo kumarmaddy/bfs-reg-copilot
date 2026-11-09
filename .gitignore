@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+dist/
+*.egg-info/
+
+# Secrets and local config
+.env
+.env.*
+*.pem
+*.key
+terraform.tfvars
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Corpus and derived data: never commit (ADR-0007)
+data/raw/
+data/cleaned/
+data/curated/
+data/embeddings/
+*.pdf
+*.gguf
+models/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store

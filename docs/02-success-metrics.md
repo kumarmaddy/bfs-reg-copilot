@@ -31,7 +31,7 @@ baseline is expected to fall short of several of these; the gap is the work.
 
 The M7 ceiling is derived from my arithmetic on a third-party price table (roughly US$0.001 per
 query on a small hosted model and about US$0.012 on a large one at 3,000 input and 400 output
-tokens). Check current Azure prices before relying on it.
+tokens).
 
 ## 3. Scale and resilience assumptions (assumptions, not requirements)
 

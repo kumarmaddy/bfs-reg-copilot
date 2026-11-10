@@ -65,9 +65,6 @@ compose an answer from them.
 
 - Public data only. No employer or client data is used or implied. See [05](05-data-statement.md).
 - Budget is near zero. Local development first; cloud only during a short free-credit window.
-- The laptop (32 GB RAM, Intel Arc iGPU) runs local models up to about 14B at Q4; measured
-  speeds are in the owner's benchmark document.
-- The 10-day horizon before a client engagement is a motivator, not a delivery contract.
 - Terms of use for each source bind us. Non-commercial reproduction is permitted with
   attribution under OSFI's and Canada.ca's terms; this project stays non-commercial.
 
@@ -90,11 +87,3 @@ so this tier is an internal, documented proportionality judgement, not an OSFI c
 
 See [00-index.md](00-index.md#roles). Independent review and security review are not yet
 assigned; the compensating controls are listed in the risk register.
-
-## 9. Open questions
-
-1. Which client sector (bank, insurer, lender, wealth, payments) is the real target? Unknown for
-   about ten days; the corpus pack design allows adding sector sources later.
-2. Does the client already use a vector store, gateway or observability product that this
-   design should match?
-3. Is an independent reviewer available for the Gate 3 and Gate 5 reviews?

@@ -23,8 +23,8 @@ Tick an item only when the evidence exists. "Owner" items cannot be done by the 
 | G1-3 | Repository scaffold with lint, types, tests, CI, dependency and code scanning | ci.yml, codeql.yml, dependabot.yml | [x] |
 | G1-4 | No corpus text in the repository | .gitignore, ADR-0007 | [x] |
 | G1-5 | Delivery plan, cut order, RAID log | 06, 07 | [x] |
-| G1-6 | **Owner:** create the GitHub repo, push, confirm CI is green | Green check on main | [ ] |
-| G1-7 | **Owner:** enable branch protection and secret scanning on the repo | Repo settings | [ ] |
+| G1-6 | Create the GitHub repo, push, confirm CI is green | Green ci run on main, 2026-11-10 | [x] |
+| G1-7 | Enable branch protection and secret scanning on the repo | Ruleset protect-main; secret scanning and push protection on | [x] |
 
 ## Result
 

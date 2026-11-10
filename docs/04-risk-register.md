@@ -56,7 +56,6 @@ Residual scores assume the mitigations are in place and tested.
 | R-17 | No independent review; one person holds every role | Solo project | Weak challenge; separation-of-duties gap | 5 | 3 | 15 | Written review checklist; automated evidence; request a peer review at Gates 3 and 5. **Accepted limitation** | Medium | all |
 | R-18 | Overstating the credential | Describing the project as production-proven | Credibility loss in front of a client | 3 | 5 | 15 | README and demo say "built to production patterns on public data, not deployed in a regulated institution" | Low | all |
 | R-19 | Tool-summary errors in this document set | Section numbers extracted by automated summary | Wrong reference cited | 3 | 3 | 9 | Mark [to verify]; owner checks against primary text at Gate 0 (G0-6) | Low | 0 |
-| R-20 | Unconfirmed key-person availability | Time constraint of about ten days | Phases cut short | 4 | 2 | 8 | Cut order defined in [06](06-delivery-plan.md): fine-tuning, then shadow pilot, never evaluation or governance | Low | all |
 
 ## 3. Review cadence
 

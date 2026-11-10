@@ -8,9 +8,7 @@ items that need an owner and a date.
 | ID | Assumption | Check by |
 |---|---|---|
 | A-1 | OSFI guideline pages remain publicly available and reproduction for non-commercial learning use is acceptable under OSFI's terms | Phase 1 start |
-| A-2 | A hosted model is available at acceptable cost for the cloud demo | Phase 4 start |
-| A-3 | The owner can spend about 8-10 hours per week | Weekly |
-| A-4 | A 3B-7B local model is adequate for development | Phase 2 |
+| A-2 | A 3B-7B local model is adequate for development | Phase 2 |
 
 ## Issues
 
@@ -28,7 +26,6 @@ items that need an owner and a date.
 | D-1 | GitHub repository `kumarmaddy/bfs-reg-copilot` created | Phase 0 close |
 | D-2 | Azure subscription with free credit | Phase 4 |
 | D-3 | Kaggle or Colab GPU access | Optional fine-tune |
-| D-4 | Client name and cloud (expected within about 10 days) | Adjust ADR-0001 mapping |
 
 ## Decisions log
 

@@ -1,28 +1,43 @@
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
-    hooks:
-      - id: check-yaml
-      - id: check-added-large-files
-        args: [--maxkb=500]
-      - id: detect-private-key
-      - id: end-of-file-fixer
-      - id: trailing-whitespace
   - repo: local
     hooks:
+      - id: check-yaml
+        name: check yaml
+        entry: uv run --no-sync python -m pre_commit_hooks.check_yaml
+        language: system
+        types: [yaml]
+      - id: check-added-large-files
+        name: check for added large files
+        entry: uv run --no-sync python -m pre_commit_hooks.check_added_large_files --maxkb=500
+        language: system
+      - id: detect-private-key
+        name: detect private key
+        entry: uv run --no-sync python -m pre_commit_hooks.detect_private_key
+        language: system
+        types: [text]
+      - id: end-of-file-fixer
+        name: fix end of files
+        entry: uv run --no-sync python -m pre_commit_hooks.end_of_file_fixer
+        language: system
+        types: [text]
+      - id: trailing-whitespace
+        name: trim trailing whitespace
+        entry: uv run --no-sync python -m pre_commit_hooks.trailing_whitespace_fixer
+        language: system
+        types: [text]
       - id: ruff
         name: ruff check
-        entry: uv run ruff check
+        entry: uv run --no-sync ruff check
         language: system
         types: [python]
       - id: ruff-format
         name: ruff format
-        entry: uv run ruff format --check
+        entry: uv run --no-sync ruff format --check
         language: system
         types: [python]
       - id: register
         name: validate source register
-        entry: uv run reg-register validate
+        entry: uv run --no-sync python -m bfs_reg_copilot.registry validate
         language: system
         files: ^data/sources/
         pass_filenames: false

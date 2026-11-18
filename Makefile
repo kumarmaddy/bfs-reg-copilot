@@ -19,6 +19,6 @@ test:
 	uv run pytest
 
 register:
-	uv run reg-register validate
+	uv run python -m bfs_reg_copilot.registry validate
 
 check: lint type test register

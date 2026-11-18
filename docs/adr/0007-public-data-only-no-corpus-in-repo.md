@@ -8,7 +8,7 @@
 
 The repository is public and doubles as a portfolio. Source documents belong to their publishers.
 OSFI's terms allow non-commercial reproduction with attribution and require permission for
-commercial redistribution. 
+commercial redistribution.
 
 ## Decision
 

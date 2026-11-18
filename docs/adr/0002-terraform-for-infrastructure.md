@@ -34,5 +34,5 @@ monitoring) so a module can be re-implemented for another cloud.
 
 ## Revisit when
 
-The client standardises on a different tool, or provider licensing for Terraform changes in a way
+Requirements change and a different tool is needed, or provider licensing for Terraform changes in a way
 that affects the project.

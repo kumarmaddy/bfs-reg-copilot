@@ -24,7 +24,7 @@ directly.
 |---|---|
 | Call provider SDKs directly | Simplest, but spreads provider details through the code and loses central budgets and logs |
 | Azure API Management AI gateway features | Good Azure-native option; less portable. API Management may still sit in front of the API |
-| Kong or another general gateway | Heavier; revisit if the client already runs it |
+| Kong or another general gateway | Heavier; revisit if the pilot needs it |
 
 ## Consequences
 
@@ -34,5 +34,5 @@ directly.
 
 ## Revisit when
 
-The client mandates a different gateway, or a security review of the gateway raises a concern we
+Requirements call for a different gateway, or a security review of the gateway raises a concern we
 cannot mitigate.

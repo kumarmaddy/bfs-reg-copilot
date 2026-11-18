@@ -35,4 +35,4 @@ pinned. No framework types cross an interface boundary.
 
 ## Revisit when
 
-The client uses a different framework, or a framework upgrade breaks an adapter twice in a row.
+Requirements call for a different framework, or a framework upgrade breaks an adapter twice in a row.

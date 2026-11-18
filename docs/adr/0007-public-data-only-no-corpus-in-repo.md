@@ -12,7 +12,7 @@ commercial redistribution.
 
 ## Decision
 
-1. Use public data only. No employer, client or customer data, and no personal data, ever, unless
+1. Use public data only. No non-public data from any organisation, no customer data and no personal data, ever, unless
    the owner first gets written approval and the system is re-rated.
 2. Never commit source documents, chunks, embeddings or excerpts beyond short quotations to the
    repository. Commit only URLs, metadata and the code that fetches them.

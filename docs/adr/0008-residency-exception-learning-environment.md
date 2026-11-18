@@ -39,7 +39,7 @@ suitable model becomes available and affordable.
 
 - Recorded as risk R-15 with low residual risk.
 - The demo and README state the exception plainly.
-- This is a real constraint banks face, so it is a good discovery question for the client.
+- This is a real constraint banks face, so the production variant is designed around it.
 
 ## Revisit when
 

@@ -1,6 +1,6 @@
 # Documentation index
 
-Project: **bfs-reg-copilot**. Document set version 0.1, dated 2026-11-08. Phase 0 (frame and govern).
+Project: **bfs-reg-copilot**. Document set version 0.2, dated 2026-11-18. Phase 0 complete
 
 ## How to use this set
 
@@ -9,15 +9,15 @@ values: **Draft** (written, not yet reviewed), **In review**, **Accepted**, **Su
 
 | # | Document | Decision it supports | Gate | Status |
 |---|---|---|---|---|
-| 01 | [Concept brief](01-concept-brief.md) | Should we build this, for whom, and what it must never do | 0 | Draft |
-| 02 | [Success metrics](02-success-metrics.md) | What "good" means, frozen before we measure | 0 | Draft |
-| 03 | [Requirements trace](03-requirements-trace.md) | Which regulatory expectations we align to and how we evidence them | 0 | Draft |
-| 04 | [Risk register and tier](04-risk-register.md) | How risky the system is and what controls that implies | 0 | Draft |
-| 05 | [Data statement](05-data-statement.md) | What data we use, how we handle it, and the residency exception | 1 | Draft |
-| 06 | [Delivery plan](06-delivery-plan.md) | What gets built when, and what "done" means per phase | 0 | Draft |
-| 07 | [RAID log](07-raid-log.md) | Risks, assumptions, issues and dependencies for the project itself | 0 | Draft |
-| 08 | [Gate 0 and 1 checklist](08-gate-0-1-checklist.md) | Whether Phase 1 may start | 0, 1 | Draft |
-| ADR | [Architecture decision records](adr/README.md) | Why the stack is what it is, and what we rejected | 0 | Draft |
+| 01 | [Concept brief](01-concept-brief.md) | Should we build this, for whom, and what it must never do | 0 | Accepted |
+| 02 | [Success metrics](02-success-metrics.md) | What "good" means, frozen before we measure | 0 | In review |
+| 03 | [Requirements trace](03-requirements-trace.md) | Which regulatory expectations we align to and how we evidence them | 0 | Accepted |
+| 04 | [Risk register and tier](04-risk-register.md) | How risky the system is and what controls that implies | 0 | Accepted, once the ratings are reviewed |
+| 05 | [Data statement](05-data-statement.md) | What data we use, how we handle it, and the residency exception | 1 | Accepted |
+| 06 | [Delivery plan](06-delivery-plan.md) | What gets built when, and what "done" means per phase | 0 | Accepted |
+| 07 | [RAID log](07-raid-log.md) | Risks, assumptions, issues and dependencies for the project itself | 0 | Accepted |
+| 08 | [Gate 0 and 1 checklist](08-gate-0-1-checklist.md) | Whether Phase 1 may start | 0, 1 | Accepted |
+| ADR | [Architecture decision records](adr/README.md) | Why the stack is what it is, and what we rejected | 0 | 	Accepted |
 
 Machine-readable governance lives in [`../data/sources/register.yaml`](../data/sources/register.yaml)
 and is validated on every commit.

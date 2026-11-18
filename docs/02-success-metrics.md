@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Version | 0.1 (Draft for Gate 0) |
+| Version | 0.2 (Draft for Gate 0) |
 | Date | 2026-11-08 |
 | Rule | **Targets are frozen at Gate 0.** Changing one needs a dated change note in section 6. |
 
@@ -17,7 +17,9 @@ baseline is expected to fall short of several of these; the gap is the work.
 | M2 | Correct refusal rate | Share of **unanswerable or out-of-scope** gold questions where the system says it cannot answer from the sources and does not fabricate | >= 90% | Gold set | 3 |
 | M3 | p95 latency | 95th percentile time from request to final answer, warm, single user, deployed version | < 10 s | Load script, 100 requests | 5 |
 
-## 2. Supporting metrics (proposed; calibrate after the Phase 2 baseline)
+## 2. Supporting metrics (M5, M8 and M9 accepted; the rest proposed)
+
+M5, M8 and M9 were accepted by the owner on 2026-11-18. M4, M6, M7 and M10 remain proposed and are calibrated after the Phase 2 baseline.
 
 | ID | Metric | Definition | Proposed target |
 |---|---|---|---|
@@ -31,7 +33,9 @@ baseline is expected to fall short of several of these; the gap is the work.
 
 The M7 ceiling is derived from my arithmetic on a third-party price table (roughly US$0.001 per
 query on a small hosted model and about US$0.012 on a large one at 3,000 input and 400 output
-tokens).
+tokens). Check current Azure prices before relying on it.
+
+
 
 ## 3. Scale and resilience assumptions (assumptions, not requirements)
 
@@ -75,3 +79,4 @@ These exist so the design is tested against something. Re-set them after the bas
 | Date | Change | Reason | Approved by |
 |---|---|---|---|
 | 2026-11-08 | Initial targets M1 to M3 accepted by the owner; M4 to M10 and S1 to S4 proposed | Gate 0 | Project owner |
+| 2026-11-18 | M5, M8 and M9 accepted; M4, M6, M7 and M10 stay proposed until the Phase 2 baseline | Integrity targets can be judged now; performance targets need a baseline | Project owner |

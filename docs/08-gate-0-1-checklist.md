@@ -18,7 +18,7 @@ Tick an item only when the evidence exists. "Owner" items cannot be done by the 
 
 | # | Check | Evidence | Done |
 |---|---|---|---|
-| G1-1 | Source register exists, validates in CI, blocks unverified sources | `reg-register validate` | [x] |
+| G1-1 | Source register exists, validates in CI, blocks unverified sources | OSFI terms read 2026-11-18 | [x] |
 | G1-2 | Open the FINTRAC pages, read the footer terms, update the register | Canada.ca terms read 2026-11-18; three FINTRAC entries unblocked | [x] |
 | G1-3 | Repository scaffold with lint, types, tests, CI, dependency and code scanning | ci.yml, codeql.yml, dependabot.yml | [x] |
 | G1-4 | No corpus text in the repository | .gitignore, ADR-0007 | [x] |

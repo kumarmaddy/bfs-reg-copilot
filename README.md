@@ -14,7 +14,7 @@ exact source section. Built to the engineering and governance patterns used in b
 
 | Phase | Goal | Status |
 |---|---|---|
-| 0. Frame and govern | Concept brief, metrics, risk register, source register, ADRs, repo baseline | In review |
+| 0. Frame and govern | Concept brief, metrics, risk register, source register, ADRs, repo baseline | Complete |
 | 1. Data pipeline | Acquire, parse, chunk and index the documents | Not started |
 | 2. Baseline RAG and evaluation | Stock model, gold question set, first measured scores | Not started |
 | 3. Improve | Hybrid retrieval, reranking, abstention, optional fine-tuning | Not started |

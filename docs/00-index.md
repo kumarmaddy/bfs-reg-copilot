@@ -31,8 +31,8 @@ recorded openly in [04-risk-register.md](04-risk-register.md) (risk R-17).
 |---|---|---|
 | Product owner and approver | Project owner | Accepts scope, targets and the release decision |
 | Developer | Project owner | Builds and operates the system |
-| Independent reviewer (model validation) | **Not yet assigned** | Ideally a peer who did not build the system; until then the review checklist and CI evidence are the compensating control |
-| Security reviewer | **Not yet assigned** | Same compensating control: automated scanning plus a written threat review |
+| Independent reviewer (model validation) | **None. Accepted limitation (2026-11-18)** | Single-owner pilot. Compensating control: written review checklist, automated CI evidence, and a peer review requested at Gates 3 and 5 if one is available. Recorded as risk R-17 |
+| Security reviewer | **None. Accepted limitation (2026-11-18)** | Same compensating control: automated scanning plus a written threat review. Recorded as risk R-17 |
 
 ## Conventions
 

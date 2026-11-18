@@ -55,7 +55,7 @@ Residual scores assume the mitigations are in place and tested.
 | R-16 | Supply-chain vulnerability | Dependencies, container images, gateway | Compromise | 3 | 4 | 12 | Pinned versions, dependency audit, image scanning, SBOM, Dependabot, CodeQL | Medium | 0, 4 |
 | R-17 | No independent review; one person holds every role | Solo project | Weak challenge; separation-of-duties gap | 5 | 3 | 15 | Written review checklist; automated evidence; request a peer review at Gates 3 and 5. **Accepted limitation** | Medium | all |
 | R-18 | Overstating the credential | Describing the project as production-proven | Credibility loss with reviewers | 3 | 5 | 15 | README and demo say "built to production patterns on public data, not deployed in a regulated institution" | Low | all |
-| R-19 | Tool-summary errors in this document set | Section numbers extracted by automated summary | Wrong reference cited | 3 | 3 | 9 | Mark [to verify]; owner checks against primary text at Gate 0 (G0-6) | Low | 0 |
+| R-19 | Tool-summary errors in this document set | Section numbers extracted by automated summary | Wrong reference cited | 3 | 3 | 9 | Mark [to verify]; OSFI references checked at Gate 0 (G0-6, 2026-11-18). Remaining markers are tracked in the RAID log | Low | 0 |
 
 ## 3. Review cadence
 

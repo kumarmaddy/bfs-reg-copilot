@@ -153,11 +153,24 @@ def test_cli_validate_ok(capsys: pytest.CaptureFixture[str]) -> None:
     assert "OK:" in capsys.readouterr().out
 
 
-def test_cli_summary_lists_blocked_sources(capsys: pytest.CaptureFixture[str]) -> None:
-    assert main(["summary", str(REGISTER_PATH)]) == EXIT_OK
+def test_cli_summary_lists_blocked_sources(
+    raw: dict[str, Any], tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # Build its own blocked source: this test must not depend on which real sources are blocked.
+    allowed = _ingestible_source(raw)
+    blocked = copy.deepcopy(allowed)
+    blocked["id"] = "B-TEST-BLOCKED"
+    blocked["ingest_allowed"] = False
+    blocked["blocking_reason"] = "terms not yet verified"
+    data = copy.deepcopy(raw)
+    data["sources"] = [allowed, blocked]
+    data["pending"] = []
+    path = tmp_path / "register.yaml"
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    assert main(["summary", str(path)]) == EXIT_OK
     out = capsys.readouterr().out
     assert "blocked sources:" in out
-    assert "B-FINTRAC-STR" in out
+    assert "B-TEST-BLOCKED" in out
 
 
 def test_cli_reports_invalid_file(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

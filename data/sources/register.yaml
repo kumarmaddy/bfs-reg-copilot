@@ -38,8 +38,11 @@ sources:
     redistribute_in_repo: false
     verification:
       primary_page_opened: true
-      terms_verified_on: 2026-11-08
-      method: automated fetch and summary of the guideline page and the OSFI terms page
+      terms_verified_on: 2026-11-18
+      method: >-
+        owner printed the guideline page and the OSFI terms and conditions page to PDF on
+        2026-11-18 and the assistant read them; guideline first checked by automated fetch on
+        2026-11-08
       notes: >-
         Visible "Date modified" is 2025-09-11 but page metadata shows dcterms.modified
         2026-10-15. Re-check for amendments at Phase 1 ingest and record the version hash.
@@ -55,6 +58,7 @@ sources:
     source_format: html
     language: en
     status: final
+    published_date: 2023-04-30
     effective_date: 2024-05-01
     terms_url: https://www.osfi-bsif.gc.ca/en/terms-conditions
     reproduction_class: non_commercial_with_attribution
@@ -69,11 +73,14 @@ sources:
     redistribute_in_repo: false
     verification:
       primary_page_opened: true
-      terms_verified_on: 2026-11-08
-      method: automated fetch and summary of the guideline page and the OSFI terms page
+      terms_verified_on: 2026-11-18
+      method: >-
+        owner printed the guideline page and the OSFI terms and conditions page to PDF on
+        2026-11-18 and the assistant read them; guideline first checked by automated fetch on
+        2026-11-08
       notes: >-
-        Effective date 2024-05-01 comes from a law-firm summary (Torys, March 2024), not from the
-        page itself. Confirm on the page at Gate 1.
+        Issued 2023-04-30 per the guideline PDF. The effective date 2024-05-01 comes from a
+        law-firm summary (Torys, March 2024) and is not stated in the PDF; still to verify.
     notes: "Does not mention AI or LLMs; its general third-party and cloud expectations apply."
 
   - id: A-OSFI-B13
@@ -86,6 +93,7 @@ sources:
     source_format: html
     language: en
     status: final
+    published_date: 2022-07-31
     effective_date: 2024-01-01
     terms_url: https://www.osfi-bsif.gc.ca/en/terms-conditions
     reproduction_class: non_commercial_with_attribution
@@ -100,10 +108,57 @@ sources:
     redistribute_in_repo: false
     verification:
       primary_page_opened: true
-      terms_verified_on: 2026-11-08
-      method: automated fetch and summary of the guideline page and the OSFI terms page
-      notes: "Effective date confirmed from OSFI's 2022 release letter. Three domains, 17 principles."
+      terms_verified_on: 2026-11-18
+      method: >-
+        owner printed the guideline page and the OSFI terms and conditions page to PDF on
+        2026-11-18 and the assistant read them; guideline first checked by automated fetch on
+        2026-11-08
+      notes: >-
+        Issued 2022-07-31 per the guideline PDF. The effective date 2024-01-01 is not stated in
+        the PDF; it came from OSFI's release letter via the 2026-11-08 automated fetch and is
+        still to verify. Three domains and 17 principles, confirmed from the PDF.
     notes: "Guideline text does not mention AI; general references to emerging technologies only."
+
+  - id: A-OSFI-E21
+    title: "Guideline E-21 - Operational Risk Management and Resilience"
+    issuer: "Office of the Superintendent of Financial Institutions (OSFI)"
+    jurisdiction: CA
+    pack: A
+    doc_type: guideline
+    url: https://www.osfi-bsif.gc.ca/en/guidance/guidance-library/operational-risk-management-resilience-guideline
+    source_format: html
+    language: en
+    status: final
+    published_date: 2024-08-22
+    effective_date: 2024-08-22
+    terms_url: https://www.osfi-bsif.gc.ca/en/terms-conditions
+    reproduction_class: non_commercial_with_attribution
+    terms_summary: >-
+      OSFI terms (page dated 2023-06-01): non-commercial reproduction in any format without
+      further permission, provided due diligence on accuracy, the complete title and author are
+      shown, and the copy states it is a copy of the version at the original URL. Commercial
+      redistribution needs prior written permission. Third-party content and official Government
+      of Canada symbols are excluded. Modification, adaptation and translation are not addressed.
+    attribution_required: true
+    attribution_template: >-
+      Based on "{title}", {issuer}, version available at {url} (retrieved {retrieved_on}).
+      Not produced in affiliation with, or endorsed by, OSFI or the Government of Canada.
+    ingest_allowed: true
+    redistribute_in_repo: false
+    verification:
+      primary_page_opened: true
+      terms_verified_on: 2026-11-18
+      method: >-
+        owner printed the guideline, the release letter, the backgrounder and the OSFI terms
+        page to PDF on 2026-11-18 and the assistant read them (the backgrounder page offered no
+        PDF export, so it was printed from the browser)
+      notes: >-
+        Phased implementation per the release letter: sections 1 and 2 effective immediately
+        (2024-08-22), section 4 by 2025-09-01, full adherence by 2026-09-01, with scenario
+        testing complete for all critical operations by 2027-09-01. effective_date records the
+        first of these. Four sections: Governance, Operational risk management, Operational
+        resilience, Key areas of operational risk management.
+    notes: "Referenced by E-23, B-10 and B-13. Release letter and backgrounder are context, not ingested."
 
   - id: B-FINTRAC-STR
     title: "Reporting suspicious transactions to FINTRAC"
@@ -219,20 +274,6 @@ sources:
     notes: ""
 
 pending:
-  - id: A-OSFI-E21
-    title: "Guideline E-21 - Operational Risk Management and Resilience"
-    issuer: "Office of the Superintendent of Financial Institutions (OSFI)"
-    pack: A
-    why_pending: >-
-      Final guideline issued 2024-08-22 (page, release letter and backgrounder read on
-      2026-11-18). Not yet a full source because the owner has not read OSFI's terms page, and
-      a version hash is needed at ingest.
-    next_action: >-
-      Read the OSFI terms page, then promote to sources with URL
-      https://www.osfi-bsif.gc.ca/en/guidance/guidance-library/operational-risk-management-resilience-guideline.
-      Phasing per the release letter: sections 1 and 2 effective 2024-08-22, section 4 by
-      2025-09-01, full adherence by 2026-09-01.
-
   - id: A-OSFI-INCIDENT
     title: "Technology and Cyber Security Incident Reporting Advisory"
     issuer: "Office of the Superintendent of Financial Institutions (OSFI)"

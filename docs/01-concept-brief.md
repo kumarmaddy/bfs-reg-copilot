@@ -63,7 +63,7 @@ compose an answer from them.
 
 ## 5. Assumptions and constraints
 
-- Public data only. No employer or client data is used or implied. See [05](05-data-statement.md).
+- Public data only. No non-public or personal data is used or implied. See [05](05-data-statement.md).
 - Budget is near zero. Local development first; cloud only during a short free-credit window.
 - Terms of use for each source bind us. Non-commercial reproduction is permitted with
   attribution under OSFI's and Canada.ca's terms; this project stays non-commercial.

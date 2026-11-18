@@ -27,17 +27,17 @@ behind our own interfaces and in the infrastructure modules.
 
 | Option | Why not |
 |---|---|
-| AWS | Equally valid and used by at least one large Canadian bank. No credit, budget or client preference favours it today |
-| Google Cloud | Same as AWS; Scotiabank's choice makes it a strong candidate if the client uses it |
+| AWS | Equally valid and used by at least one large Canadian bank. No credit or budget consideration favours it today |
+| Google Cloud | Same as AWS; Scotiabank's choice makes it a strong candidate if the pilot moves to that cloud |
 | Multi-cloud deployment now | Doubles the work and cost for a learning project. Portability by design gets most of the value |
 
 ## Consequences
 
 - Faster path to a hosted model and managed identity, which matches the owner's plan.
-- If the client runs another cloud, only the infrastructure module and the model-provider
+- If the pilot moves to another cloud, only the infrastructure module and the model-provider
   adapter change. Mapping table: concept brief and stack discussion, summarised in the README.
 - We must resist convenient Azure-only shortcuts in application code.
 
 ## Revisit when
 
-The client names its cloud, or OSFI's final guidance on cloud portability changes materially.
+The pilot moves to another cloud, or OSFI's final guidance on cloud portability changes materially.

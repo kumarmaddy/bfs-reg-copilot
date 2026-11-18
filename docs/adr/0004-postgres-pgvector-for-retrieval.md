@@ -21,7 +21,7 @@ retrieval layer behind a `Retriever` interface. Rerank the top candidates with a
 
 | Option | Why not (or why later) |
 |---|---|
-| Azure AI Search | Strong enterprise option with hybrid search and semantic ranking. Free tier too small; paid tier costs money. An adapter is a Phase 4 stretch goal if the client uses it |
+| Azure AI Search | Strong enterprise option with hybrid search and semantic ranking. Free tier too small; paid tier costs money. An adapter is a Phase 4 stretch goal if the pilot needs it |
 | Chroma or similar embedded stores | Quick to start, but not what a bank would approve and not equal to the cloud setup |
 | OpenSearch / Elasticsearch | Capable, but heavier to run locally |
 
@@ -33,4 +33,4 @@ retrieval layer behind a `Retriever` interface. Rerank the top candidates with a
 
 ## Revisit when
 
-Retrieval p95 exceeds the S2 target on the scale corpus, or the client mandates another store.
+Retrieval p95 exceeds the S2 target on the scale corpus, or requirements change and another store is needed.

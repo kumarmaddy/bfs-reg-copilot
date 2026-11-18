@@ -8,7 +8,7 @@
 
 ## 1. Principle
 
-This project uses **public data only**. It uses no employer, client or customer data, not even
+This project uses **public data only**. It uses no non-public data from any organisation and no customer data, not even
 samples, and no personal data. If that ever changes, the system is re-rated (see
 [04](04-risk-register.md)) and the owner obtains written approval first.
 
@@ -33,8 +33,8 @@ samples, and no personal data. If that ever changes, the system is re-rated (see
 | eCFR / US federal rules (Phase 3) | US federal government works are generally in the public domain **[to verify]** | Confirm per source before ingestion |
 
 **Commercial use needs separate permission.** If this work were used commercially, for example
-inside a client engagement, the corpus rights would need a fresh decision by the client's counsel.
-That is a real finding to raise with a client, and it is recorded here so it is not forgotten.
+inside an institution, the corpus rights would need a fresh decision by that institution's counsel.
+That is recorded here so it is not forgotten.
 
 Attribution text shown with answers comes from each register entry's `attribution_template`.
 

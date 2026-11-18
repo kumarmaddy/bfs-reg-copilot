@@ -33,4 +33,4 @@ and the load test, then tear down with Terraform.
 
 ## Revisit when
 
-AKS cost exceeds the credit window, or the client's platform is OpenShift (then adapt the chart).
+AKS cost exceeds the credit window, or the pilot needs to run on OpenShift (then adapt the chart).

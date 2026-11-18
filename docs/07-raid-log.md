@@ -35,3 +35,14 @@ items that need an owner and a date.
 | 2026-11-08 | Public repository; public data only | ADR-0007 |
 | 2026-11-08 | Stack choices | ADR-0001 to 0006 |
 | 2026-11-08 | Learning-environment residency exception | ADR-0008 |
+
+
+## Open verifications
+
+| Item | Where | Check before |
+|---|---|---|
+| B-10 and B-13 effective dates | 03-requirements-trace.md | Phase 5 |
+| US federal works public-domain status, per source | 05-data-statement.md | Phase 3 |
+| Azure Canadian regional model availability | 05-data-statement.md, ADR-0008 | Phase 4 |
+| AKS and VM pricing | ADR-0003 | Phase 4 |
+| Write the review checklist and threat review | 00-index.md roles, R-17 | Gates 3 and 4 |

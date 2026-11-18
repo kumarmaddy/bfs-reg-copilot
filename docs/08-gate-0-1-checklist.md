@@ -11,8 +11,8 @@ Tick an item only when the evidence exists. "Owner" items cannot be done by the 
 | G0-3 | Risk tier assigned with rationale and re-rating triggers | 04-risk-register.md | [x] |
 | G0-4 | Requirements mapped to controls and phases | 03-requirements-trace.md | [x] |
 | G0-5 | Public-data-only rule and residency exception recorded | ADR-0007, ADR-0008, 05-data-statement.md | [x] |
-| G0-6 | Open each OSFI guideline and confirm the principle and section numbers marked [x] | Headings compared to guideline PDFs; four references corrected | [x] |
-| G0-7 | **Owner:** assign an independent reviewer, or record the limitation as accepted | 00-index.md roles | [ ] |
+| G0-6 | Open each OSFI guideline and confirm the principle and section numbers marked `[to verify]` | Headings compared to guideline PDFs; four references corrected | [x] |
+| G0-7 | Independent reviewer: none; limitation accepted by the owner | 00-index.md roles, risk R-17 | [x] |
 
 ## Gate 1: is the foundation safe to build on?
 

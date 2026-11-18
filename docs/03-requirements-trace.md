@@ -81,5 +81,4 @@ Phase column: when the control is built or evidenced.
    automated evidence. Residual risk accepted for a learning project; would not be acceptable in
    an institution.
 2. The AI-specific application of E-23 is interpretation (REQ-01, REQ-08, REQ-13).
-3. E-21 (Operational Risk Management) is referenced by E-23, B-10 and B-13 but its final status
-   is unconfirmed; see `A-OSFI-E21` in the register.
+3. E-21 (Operational Risk Management and Resilience) was issued in final form on 2024-08-22, with full adherence expected by 2026-09-01. It is referenced by E-23, B-10 and B-13; see `A-OSFI-E21` in the register.

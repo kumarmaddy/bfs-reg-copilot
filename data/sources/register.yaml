@@ -220,13 +220,18 @@ sources:
 
 pending:
   - id: A-OSFI-E21
-    title: "Guideline E-21 - Operational Risk and Resilience (status to confirm)"
+    title: "Guideline E-21 - Operational Risk Management and Resilience"
     issuer: "Office of the Superintendent of Financial Institutions (OSFI)"
     pack: A
     why_pending: >-
-      OSFI launched a consultation on an enhanced E-21 covering operational resilience. Whether a
-      final version has been issued, and its effective date, is not confirmed.
-    next_action: "Check the OSFI guidance library for the final E-21 and its effective date."
+      Final guideline issued 2024-08-22 (page, release letter and backgrounder read on
+      2026-11-18). Not yet a full source because the owner has not read OSFI's terms page, and
+      a version hash is needed at ingest.
+    next_action: >-
+      Read the OSFI terms page, then promote to sources with URL
+      https://www.osfi-bsif.gc.ca/en/guidance/guidance-library/operational-risk-management-resilience-guideline.
+      Phasing per the release letter: sections 1 and 2 effective 2024-08-22, section 4 by
+      2025-09-01, full adherence by 2026-09-01.
 
   - id: A-OSFI-INCIDENT
     title: "Technology and Cyber Security Incident Reporting Advisory"

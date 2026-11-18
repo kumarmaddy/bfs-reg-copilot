@@ -7,7 +7,7 @@
 #   is a machine summary, not a human reading. The owner confirms each ingestible entry at
 #   Gate 1 (docs/08-gate-0-1-checklist.md) by opening the page and the terms page.
 version: 1
-updated_on: 2026-11-08
+updated_on: 2026-11-18
 
 sources:
   - id: A-OSFI-E23
@@ -120,24 +120,28 @@ sources:
     terms_url: https://www.canada.ca/en/transparency/terms.html
     reproduction_class: non_commercial_with_attribution
     terms_summary: >-
-      Canada.ca general terms: non-commercial reproduction without further permission with due
-      diligence on accuracy, full title and author credited, and a statement that the copy is based
-      on the version at the original URL. Commercial redistribution needs written permission.
+      Canada.ca terms (page dated 2025-09-05): non-commercial reproduction in any format without
+      further permission, provided due diligence on accuracy, the complete title and author are
+      shown, and the copy states it is a copy of the version at the original URL. Commercial
+      redistribution needs prior written permission. "Unless otherwise specified" applies, and the
+      page text shows no page-specific notice. Third-party content and official Government of
+      Canada symbols are excluded from these permissions.
     attribution_required: true
     attribution_template: >-
       Based on "{title}", {issuer}, version available at {url} (retrieved {retrieved_on}).
       Not produced in affiliation with, or endorsed by, FINTRAC or the Government of Canada.
-    ingest_allowed: false
-    blocking_reason: >-
-      The fetch was truncated before the page footer, so a FINTRAC-specific terms notice was not
-      seen. Open the page footer, confirm which terms link it uses, then set verification and
-      ingest_allowed.
+    ingest_allowed: true
     redistribute_in_repo: false
     verification:
       primary_page_opened: true
-      terms_verified_on: null
-      method: automated fetch (first 100,000 of 161,020 characters) plus Canada.ca terms page
-      notes: "Replaces two archived FINTRAC guidance pages (what is an STR; reporting STRs)."
+      terms_verified_on: 2026-11-18
+      method: >-
+        owner printed the page and the Canada.ca terms and privacy pages to PDF on 2026-11-18 and
+        the assistant read them; no archive or replacement banner and no page-specific copyright
+        notice found in the page text. Footer link target not separately confirmed.
+      notes: >-
+        Replaces two archived FINTRAC guidance pages (what is an STR; reporting STRs). Very
+        large page (181 printed pages), so chunk by heading. Contains a fictitious sample report.
     notes: "Related: compliance program requirements and risk assessment guidance."
 
   - id: B-FINTRAC-CPR
@@ -150,21 +154,30 @@ sources:
     source_format: html
     language: en
     status: final
+    last_modified_observed: 2024-10-11
     terms_url: https://www.canada.ca/en/transparency/terms.html
-    reproduction_class: unverified
+    reproduction_class: non_commercial_with_attribution
     terms_summary: >-
-      Presumed to follow the Canada.ca general terms, but this page has not been opened, so the
-      assumption is unverified.
+      Canada.ca terms (page dated 2025-09-05): non-commercial reproduction in any format without
+      further permission, provided due diligence on accuracy, the complete title and author are
+      shown, and the copy states it is a copy of the version at the original URL. Commercial
+      redistribution needs prior written permission. "Unless otherwise specified" applies, and the
+      page text shows no page-specific notice. Third-party content and official Government of
+      Canada symbols are excluded from these permissions.
     attribution_required: true
     attribution_template: >-
       Based on "{title}", {issuer}, version available at {url} (retrieved {retrieved_on}).
       Not produced in affiliation with, or endorsed by, FINTRAC or the Government of Canada.
-    ingest_allowed: false
-    blocking_reason: "URL taken from a link on the STR page; the page itself has not been opened."
+    ingest_allowed: true
     redistribute_in_repo: false
     verification:
-      primary_page_opened: false
-      method: link seen on B-FINTRAC-STR
+      primary_page_opened: true
+      terms_verified_on: 2026-11-18
+      method: >-
+        owner printed the page and the Canada.ca terms and privacy pages to PDF on 2026-11-18 and
+        the assistant read them; no archive or replacement banner and no page-specific copyright
+        notice found in the page text. Footer link target not separately confirmed.
+      notes: "Date modified 2024-10-11 as shown on the page."
     notes: ""
 
   - id: B-FINTRAC-RBA
@@ -177,21 +190,32 @@ sources:
     source_format: html
     language: en
     status: final
+    last_modified_observed: 2021-01-04
     terms_url: https://www.canada.ca/en/transparency/terms.html
-    reproduction_class: unverified
+    reproduction_class: non_commercial_with_attribution
     terms_summary: >-
-      Presumed to follow the Canada.ca general terms, but this page has not been opened, so the
-      assumption is unverified.
+      Canada.ca terms (page dated 2025-09-05): non-commercial reproduction in any format without
+      further permission, provided due diligence on accuracy, the complete title and author are
+      shown, and the copy states it is a copy of the version at the original URL. Commercial
+      redistribution needs prior written permission. "Unless otherwise specified" applies, and the
+      page text shows no page-specific notice. Third-party content and official Government of
+      Canada symbols are excluded from these permissions.
     attribution_required: true
     attribution_template: >-
       Based on "{title}", {issuer}, version available at {url} (retrieved {retrieved_on}).
       Not produced in affiliation with, or endorsed by, FINTRAC or the Government of Canada.
-    ingest_allowed: false
-    blocking_reason: "URL taken from a link on the STR page; the page itself has not been opened."
+    ingest_allowed: true
     redistribute_in_repo: false
     verification:
-      primary_page_opened: false
-      method: link seen on B-FINTRAC-STR
+      primary_page_opened: true
+      terms_verified_on: 2026-11-18
+      method: >-
+        owner printed the page and the Canada.ca terms and privacy pages to PDF on 2026-11-18 and
+        the assistant read them; no archive or replacement banner and no page-specific copyright
+        notice found in the page text. Footer link target not separately confirmed.
+      notes: >-
+        Date modified 2021-01-04 is the oldest of the three pages. Re-check for a newer version
+        at Phase 1 ingest.
     notes: ""
 
 pending:

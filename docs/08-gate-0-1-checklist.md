@@ -11,7 +11,7 @@ Tick an item only when the evidence exists. "Owner" items cannot be done by the 
 | G0-3 | Risk tier assigned with rationale and re-rating triggers | 04-risk-register.md | [x] |
 | G0-4 | Requirements mapped to controls and phases | 03-requirements-trace.md | [x] |
 | G0-5 | Public-data-only rule and residency exception recorded | ADR-0007, ADR-0008, 05-data-statement.md | [x] |
-| G0-6 | **Owner:** open each OSFI guideline and confirm the principle and section numbers marked [x] | Headings compared to guideline PDFs; four references corrected | [x] |
+| G0-6 | Open each OSFI guideline and confirm the principle and section numbers marked [x] | Headings compared to guideline PDFs; four references corrected | [x] |
 | G0-7 | **Owner:** assign an independent reviewer, or record the limitation as accepted | 00-index.md roles | [ ] |
 
 ## Gate 1: is the foundation safe to build on?
@@ -19,7 +19,7 @@ Tick an item only when the evidence exists. "Owner" items cannot be done by the 
 | # | Check | Evidence | Done |
 |---|---|---|---|
 | G1-1 | Source register exists, validates in CI, blocks unverified sources | `reg-register validate` | [x] |
-| G1-2 | **Owner:** open the FINTRAC pages, read the footer terms, update the register | Register entries B-FINTRAC-* | [ ] |
+| G1-2 | Open the FINTRAC pages, read the footer terms, update the register | Canada.ca terms read 2026-11-18; three FINTRAC entries unblocked | [x] |
 | G1-3 | Repository scaffold with lint, types, tests, CI, dependency and code scanning | ci.yml, codeql.yml, dependabot.yml | [x] |
 | G1-4 | No corpus text in the repository | .gitignore, ADR-0007 | [x] |
 | G1-5 | Delivery plan, cut order, RAID log | 06, 07 | [x] |

@@ -47,3 +47,10 @@ def test_invalid_register_is_reported(tmp_path: Path) -> None:
     bad = tmp_path / "bad.yaml"
     bad.write_text("version: 1\n", encoding="utf-8")
     assert main(["--register", str(bad), "list"]) == EXIT_INVALID
+
+
+def test_fetch_refuses_a_pending_source_without_touching_the_store(tmp_path: Path) -> None:
+    pending_id = load_register(REGISTER_PATH).pending[0].id
+    code = main(["--register", str(REGISTER_PATH), "fetch", pending_id, "--raw-dir", str(tmp_path)])
+    assert code == EXIT_REFUSED
+    assert list(tmp_path.iterdir()) == []

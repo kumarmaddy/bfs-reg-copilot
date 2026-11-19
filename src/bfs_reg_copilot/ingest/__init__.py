@@ -8,6 +8,7 @@ from bfs_reg_copilot.ingest.fetcher import (
     PoliteFetcher,
     require_ingestible,
 )
+from bfs_reg_copilot.ingest.store import RawRecord, RawStore, RawStoreError, SaveResult
 
 __all__ = [
     "USER_AGENT",
@@ -15,5 +16,9 @@ __all__ = [
     "FetchRefused",
     "FetchResult",
     "PoliteFetcher",
+    "RawRecord",
+    "RawStore",
+    "RawStoreError",
+    "SaveResult",
     "require_ingestible",
 ]

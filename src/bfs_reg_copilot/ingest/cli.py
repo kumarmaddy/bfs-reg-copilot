@@ -1,4 +1,4 @@
-"""Command line for the ingestion gate. Slice 1.1 offers `list` and `check`; no network calls."""
+"""Command line for ingestion. `list` and `check` never touch the network; `fetch` does."""
 
 from __future__ import annotations
 
@@ -8,15 +8,23 @@ from pathlib import Path
 
 import yaml
 
-from bfs_reg_copilot.ingest.fetcher import FetchRefused, require_ingestible
+from bfs_reg_copilot.ingest.fetcher import (
+    FetchError,
+    FetchRefused,
+    PoliteFetcher,
+    require_ingestible,
+)
+from bfs_reg_copilot.ingest.store import RawStore, RawStoreError
 from bfs_reg_copilot.registry import Register, load_register
 
 EXIT_OK = 0
 EXIT_INVALID = 1
 EXIT_UNREADABLE = 2
 EXIT_REFUSED = 3
+EXIT_FETCH_FAILED = 4
 
 DEFAULT_PATH = Path("data/sources/register.yaml")
+DEFAULT_RAW_DIR = Path("data/raw")
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -29,6 +37,9 @@ def _build_parser() -> argparse.ArgumentParser:
     sub.add_parser("list", help="show every source and whether it may be ingested")
     check = sub.add_parser("check", help="exit 0 if the source may be ingested, 3 if refused")
     check.add_argument("source_id")
+    fetch = sub.add_parser("fetch", help="fetch one allowed source and store the raw bytes")
+    fetch.add_argument("source_id")
+    fetch.add_argument("--raw-dir", type=Path, default=DEFAULT_RAW_DIR, help="raw store root")
     return parser
 
 
@@ -59,10 +70,33 @@ def main(argv: Sequence[str] | None = None) -> int:
         print("\n".join(_status_lines(register)))
         return EXIT_OK
 
+    if args.command == "fetch":
+        return _fetch(register, args.source_id, args.raw_dir)
+
     try:
         source = require_ingestible(register, args.source_id)
     except FetchRefused as exc:
         print(f"REFUSED: {exc}")
         return EXIT_REFUSED
     print(f"ALLOWED: {source.id}  {source.url}")
+    return EXIT_OK
+
+
+def _fetch(register: Register, source_id: str, raw_dir: Path) -> int:
+    try:
+        with PoliteFetcher(register) as fetcher:
+            result = fetcher.fetch(source_id)
+        saved = RawStore(raw_dir).save(result)
+    except FetchRefused as exc:
+        print(f"REFUSED: {exc}")
+        return EXIT_REFUSED
+    except (FetchError, RawStoreError) as exc:
+        print(f"FAILED: {exc}")
+        return EXIT_FETCH_FAILED
+    record = saved.record
+    state = "new content" if saved.is_new_content else "unchanged since an earlier fetch"
+    print(
+        f"STORED: {record.source_id}  sha256={record.sha256[:12]}  {record.size_bytes} bytes  "
+        f"{state}  retrieved {record.retrieved_at.isoformat()}"
+    )
     return EXIT_OK

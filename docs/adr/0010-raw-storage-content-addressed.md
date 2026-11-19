@@ -22,6 +22,9 @@ text, so they stay out of git (ADR-0007).
 - Blobs are written to a temporary file, synced, then renamed. The manifest line is written only
   after the blob exists.
 - Reading a blob re-checks its hash and refuses a mismatch.
+- Blobs are made read-only when written, so an editor cannot quietly change them. Saving a page
+  whose stored copy fails its hash replaces the damaged copy and reports it as repaired, instead
+  of calling it unchanged. (Added after a stored page was modified by hand on 2026-11-19.)
 - The source id becomes a folder name, so only well-formed register ids are accepted.
 
 ## Alternatives considered

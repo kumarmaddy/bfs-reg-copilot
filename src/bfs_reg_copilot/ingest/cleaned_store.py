@@ -45,8 +45,14 @@ def clean_record(store: RawStore, record: RawRecord) -> CleanedDocument:
     )
 
 
+def cleaned_file(
+    root: Path, source_id: str, raw_sha256: str, version: str = CLEANER_VERSION
+) -> Path:
+    return root / source_id / f"{raw_sha256}.v{version}.json"
+
+
 def cleaned_path(root: Path, doc: CleanedDocument) -> Path:
-    return root / doc.source_id / f"{doc.raw_sha256}.v{doc.cleaner_version}.json"
+    return cleaned_file(root, doc.source_id, doc.raw_sha256, doc.cleaner_version)
 
 
 def write_cleaned(root: Path, doc: CleanedDocument) -> Path:

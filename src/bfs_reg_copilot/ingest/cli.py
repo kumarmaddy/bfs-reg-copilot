@@ -1,4 +1,4 @@
-"""Command line for ingestion. `list`, `check` and `clean` never touch the network; `fetch` does."""
+"""Command line for ingestion. Only `fetch` uses the network; the rest work on local files."""
 
 from __future__ import annotations
 
@@ -8,8 +8,15 @@ from pathlib import Path
 
 import yaml
 
+from bfs_reg_copilot.ingest.chunk_store import write_chunks
+from bfs_reg_copilot.ingest.chunking import chunk_document
 from bfs_reg_copilot.ingest.clean import CleaningError
-from bfs_reg_copilot.ingest.cleaned_store import clean_record, write_cleaned
+from bfs_reg_copilot.ingest.cleaned_store import (
+    clean_record,
+    cleaned_file,
+    read_cleaned,
+    write_cleaned,
+)
 from bfs_reg_copilot.ingest.fetcher import (
     FetchError,
     FetchRefused,
@@ -28,6 +35,7 @@ EXIT_FETCH_FAILED = 4
 DEFAULT_PATH = Path("data/sources/register.yaml")
 DEFAULT_RAW_DIR = Path("data/raw")
 DEFAULT_CLEANED_DIR = Path("data/cleaned")
+DEFAULT_CHUNK_DIR = Path("data/curated")
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -47,6 +55,11 @@ def _build_parser() -> argparse.ArgumentParser:
     clean.add_argument("source_id")
     clean.add_argument("--raw-dir", type=Path, default=DEFAULT_RAW_DIR, help="raw store root")
     clean.add_argument("--out-dir", type=Path, default=DEFAULT_CLEANED_DIR, help="cleaned root")
+    chunk = sub.add_parser("chunk", help="chunk the latest cleaned page of one source")
+    chunk.add_argument("source_id")
+    chunk.add_argument("--raw-dir", type=Path, default=DEFAULT_RAW_DIR, help="raw store root")
+    chunk.add_argument("--cleaned-dir", type=Path, default=DEFAULT_CLEANED_DIR, help="cleaned root")
+    chunk.add_argument("--out-dir", type=Path, default=DEFAULT_CHUNK_DIR, help="chunk root")
     return parser
 
 
@@ -77,6 +90,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         print("\n".join(_status_lines(register)))
         return EXIT_OK
 
+    if args.command == "chunk":
+        return _chunk(register, args.source_id, args.raw_dir, args.cleaned_dir, args.out_dir)
+
     if args.command == "clean":
         return _clean(register, args.source_id, args.raw_dir, args.out_dir)
 
@@ -104,7 +120,10 @@ def _fetch(register: Register, source_id: str, raw_dir: Path) -> int:
         print(f"FAILED: {exc}")
         return EXIT_FETCH_FAILED
     record = saved.record
-    state = "new content" if saved.is_new_content else "unchanged since an earlier fetch"
+    if saved.repaired:
+        state = "REPAIRED a damaged stored copy"
+    else:
+        state = "new content" if saved.is_new_content else "unchanged since an earlier fetch"
     print(
         f"STORED: {record.source_id}  sha256={record.sha256[:12]}  {record.size_bytes} bytes  "
         f"{state}  retrieved {record.retrieved_at.isoformat()}"
@@ -131,4 +150,28 @@ def _clean(register: Register, source_id: str, raw_dir: Path, out_dir: Path) -> 
         return EXIT_FETCH_FAILED
     chars = sum(len(s.text) for s in doc.sections)
     print(f"CLEANED: {source_id}  {len(doc.sections)} sections  {chars} chars  -> {path}")
+    return EXIT_OK
+
+
+def _chunk(
+    register: Register, source_id: str, raw_dir: Path, cleaned_dir: Path, out_dir: Path
+) -> int:
+    try:
+        require_ingestible(register, source_id)
+    except FetchRefused as exc:
+        print(f"REFUSED: {exc}")
+        return EXIT_REFUSED
+    record = RawStore(raw_dir).latest(source_id)
+    if record is None:
+        print(f"FAILED: nothing stored for {source_id}; run fetch first")
+        return EXIT_FETCH_FAILED
+    source_file = cleaned_file(cleaned_dir, source_id, record.sha256)
+    if not source_file.exists():
+        print(f"FAILED: no cleaned page for the latest fetch of {source_id}; run clean first")
+        return EXIT_FETCH_FAILED
+    doc = read_cleaned(source_file)
+    chunks = chunk_document(doc)
+    path = write_chunks(out_dir, chunks, doc.cleaner_version)
+    longest = max(len(c.text) for c in chunks)
+    print(f"CHUNKED: {source_id}  {len(chunks)} chunks  longest {longest} chars  -> {path}")
     return EXIT_OK

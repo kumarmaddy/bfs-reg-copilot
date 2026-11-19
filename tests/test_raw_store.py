@@ -77,7 +77,9 @@ def test_manifest_is_one_json_object_per_line(tmp_path: Path) -> None:
 def test_tampered_blob_is_detected(tmp_path: Path) -> None:
     store = RawStore(tmp_path)
     record = store.save(_result()).record
-    store.blob_path(record).write_bytes(b"something else")
+    blob = store.blob_path(record)
+    blob.chmod(0o600)  # stored pages are read-only; make the test tamper deliberately
+    blob.write_bytes(b"something else")
     with pytest.raises(RawStoreError, match="hash"):
         store.read_body(record)
 
@@ -85,7 +87,9 @@ def test_tampered_blob_is_detected(tmp_path: Path) -> None:
 def test_missing_blob_is_detected(tmp_path: Path) -> None:
     store = RawStore(tmp_path)
     record = store.save(_result()).record
-    store.blob_path(record).unlink()
+    blob = store.blob_path(record)
+    blob.chmod(0o600)
+    blob.unlink()
     with pytest.raises(RawStoreError, match="missing"):
         store.read_body(record)
 
@@ -107,3 +111,27 @@ def test_raw_folder_is_git_ignored() -> None:
     """ADR-0007: corpus text must never be committable."""
     lines = (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
     assert "data/raw/" in lines
+
+
+def test_stored_blobs_are_read_only(tmp_path: Path) -> None:
+    store = RawStore(tmp_path)
+    record = store.save(_result()).record
+    assert store.blob_path(record).stat().st_mode & 0o222 == 0
+
+
+def test_a_damaged_stored_copy_is_repaired_not_trusted(tmp_path: Path) -> None:
+    store = RawStore(tmp_path)
+    record = store.save(_result()).record
+    blob = store.blob_path(record)
+    blob.chmod(0o600)
+    blob.write_bytes(b"damaged by an editor")
+    again = store.save(_result(when=datetime(2026, 12, 1, tzinfo=UTC)))
+    assert again.repaired
+    assert store.read_body(record) == b"<html>v1</html>"
+    assert blob.stat().st_mode & 0o222 == 0
+
+
+def test_an_intact_stored_copy_is_not_reported_as_repaired(tmp_path: Path) -> None:
+    store = RawStore(tmp_path)
+    store.save(_result())
+    assert not store.save(_result()).repaired

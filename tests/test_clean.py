@@ -191,7 +191,9 @@ def test_cleaning_refuses_a_tampered_raw_blob(tmp_path: Path) -> None:
     store, result = _store_page(tmp_path / "raw")
     record = store.latest(result.source_id)
     assert record is not None
-    store.blob_path(record).write_bytes(b"<main><h1>x</h1><p>forged</p></main>")
+    blob = store.blob_path(record)
+    blob.chmod(0o600)  # stored pages are read-only; make the test tamper deliberately
+    blob.write_bytes(b"<main><h1>x</h1><p>forged</p></main>")
     with pytest.raises(RawStoreError, match="hash"):
         clean_record(store, record)
 

@@ -14,6 +14,7 @@ from __future__ import annotations
 import hashlib
 import os
 import re
+import stat
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -50,6 +51,7 @@ class RawRecord(BaseModel):
 class SaveResult:
     record: RawRecord
     is_new_content: bool
+    repaired: bool = False  # a stored copy existed but did not match its hash, so it was replaced
 
 
 class RawStore:
@@ -81,8 +83,11 @@ class RawStore:
             last_modified=result.last_modified,
         )
         blob = self.blob_path(record)
-        is_new = not blob.exists()
-        if is_new:
+        existed = blob.exists()
+        # A copy that exists but fails its own hash is replaced, never trusted as "unchanged".
+        repaired = existed and hashlib.sha256(blob.read_bytes()).hexdigest() != digest
+        is_new = not existed
+        if is_new or repaired:
             blob.parent.mkdir(parents=True, exist_ok=True)
             self._write_atomically(blob, result.body)
         # The manifest line is written only after the blob is safely on disk.
@@ -91,7 +96,7 @@ class RawStore:
             handle.write(record.model_dump_json() + "\n")
             handle.flush()
             os.fsync(handle.fileno())
-        return SaveResult(record=record, is_new_content=is_new)
+        return SaveResult(record=record, is_new_content=is_new, repaired=repaired)
 
     def records(self, source_id: str) -> list[RawRecord]:
         manifest = self._dir(source_id) / "manifest.jsonl"
@@ -123,7 +128,13 @@ class RawStore:
                 handle.write(body)
                 handle.flush()
                 os.fsync(handle.fileno())
+            if target.exists():
+                target.chmod(
+                    stat.S_IWRITE | stat.S_IREAD
+                )  # Windows cannot replace a read-only file
             os.replace(tmp_name, target)
+            # Stored pages are evidence. Read-only keeps an editor from quietly changing them.
+            target.chmod(stat.S_IREAD)
         except BaseException:
             Path(tmp_name).unlink(missing_ok=True)
             raise

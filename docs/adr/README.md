@@ -15,6 +15,7 @@ would make us revisit it. Format: a short adaptation of MADR. Template: [0000](0
 | [0008](0008-residency-exception-learning-environment.md) | Data-residency exception for the learning environment | Accepted, with expiry conditions |
 | [0009](0009-polite-register-gated-fetching.md) | Register-gated, polite fetching | Accepted |
 | [0010](0010-raw-storage-content-addressed.md) | Raw storage is content-addressed with an append-only manifest | Accepted |
+| [0011](0011-cleaning-keeps-main-content-and-headings.md) | Cleaning keeps main content and heading structure | Accepted |
 
 "Accepted" here means accepted by the project owner at Gate 0 on 2026-11-08. Evidence quoted from
 news articles, job postings and aggregator sites is indicative, not authoritative.

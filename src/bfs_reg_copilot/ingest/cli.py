@@ -17,6 +17,7 @@ from bfs_reg_copilot.ingest.cleaned_store import (
     read_cleaned,
     write_cleaned,
 )
+from bfs_reg_copilot.ingest.dq import run_dq
 from bfs_reg_copilot.ingest.fetcher import (
     FetchError,
     FetchRefused,
@@ -31,6 +32,7 @@ EXIT_INVALID = 1
 EXIT_UNREADABLE = 2
 EXIT_REFUSED = 3
 EXIT_FETCH_FAILED = 4
+EXIT_DQ_FAILED = 5
 
 DEFAULT_PATH = Path("data/sources/register.yaml")
 DEFAULT_RAW_DIR = Path("data/raw")
@@ -60,6 +62,12 @@ def _build_parser() -> argparse.ArgumentParser:
     chunk.add_argument("--raw-dir", type=Path, default=DEFAULT_RAW_DIR, help="raw store root")
     chunk.add_argument("--cleaned-dir", type=Path, default=DEFAULT_CLEANED_DIR, help="cleaned root")
     chunk.add_argument("--out-dir", type=Path, default=DEFAULT_CHUNK_DIR, help="chunk root")
+    dq = sub.add_parser("dq", help="run the data-quality checks; exit 5 if any ERROR")
+    dq.add_argument("--strict", action="store_true", help="treat warnings as failures too")
+    dq.add_argument("--repo-root", type=Path, default=Path("."), help="repo root (git checks)")
+    dq.add_argument("--raw-dir", type=Path, default=DEFAULT_RAW_DIR, help="raw store root")
+    dq.add_argument("--cleaned-dir", type=Path, default=DEFAULT_CLEANED_DIR, help="cleaned root")
+    dq.add_argument("--chunk-dir", type=Path, default=DEFAULT_CHUNK_DIR, help="chunk root")
     return parser
 
 
@@ -89,6 +97,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "list":
         print("\n".join(_status_lines(register)))
         return EXIT_OK
+
+    if args.command == "dq":
+        return _dq(register, args)
 
     if args.command == "chunk":
         return _chunk(register, args.source_id, args.raw_dir, args.cleaned_dir, args.out_dir)
@@ -175,3 +186,19 @@ def _chunk(
     longest = max(len(c.text) for c in chunks)
     print(f"CHUNKED: {source_id}  {len(chunks)} chunks  longest {longest} chars  -> {path}")
     return EXIT_OK
+
+
+def _dq(register: Register, args: argparse.Namespace) -> int:
+    report = run_dq(
+        register,
+        raw_root=args.raw_dir,
+        cleaned_root=args.cleaned_dir,
+        curated_root=args.chunk_dir,
+        repo_root=args.repo_root,
+    )
+    for source_id, count in report.chunks_checked.items():
+        print(f"CHECKED  {source_id}  {count} chunks")
+    for finding in report.findings:
+        print(finding.line())
+    print(f"DQ: {len(report.errors)} error(s), {len(report.warnings)} warning(s)")
+    return EXIT_OK if report.ok(strict=args.strict) else EXIT_DQ_FAILED

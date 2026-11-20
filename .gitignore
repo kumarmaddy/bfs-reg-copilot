@@ -26,6 +26,8 @@ data/embeddings/
 *.pdf
 *.gguf
 models/
+.airflow/
+.venv-airflow/
 
 # Editors / OS
 .vscode/

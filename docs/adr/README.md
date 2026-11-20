@@ -17,6 +17,7 @@ would make us revisit it. Format: a short adaptation of MADR. Template: [0000](0
 | [0010](0010-raw-storage-content-addressed.md) | Raw storage is content-addressed with an append-only manifest | Accepted |
 | [0011](0011-cleaning-keeps-main-content-and-headings.md) | Cleaning keeps main content and heading structure | Accepted |
 | [0012](0012-section-aware-chunking.md) | Section-aware chunking with verbatim, traceable chunks | Accepted |
+| [0013](0013-airflow-orchestration-thin-dag.md) | Airflow orchestrates a thin DAG over tested plain-Python stages | Accepted |
 
 "Accepted" here means accepted by the project owner at Gate 0 on 2026-11-08. Evidence quoted from
 news articles, job postings and aggregator sites is indicative, not authoritative.

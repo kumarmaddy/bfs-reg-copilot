@@ -18,6 +18,8 @@ items that need an owner and a date.
 | I-2 | OSFI principle and section numbers in the trace are unverified | Owner | Open |
 | I-3 | OSFI E-21 final status unconfirmed | Owner | Open |
 | I-4 | No independent reviewer assigned | Owner | Open (accepted limitation, R-17) |
+| I-5 | Prompt-injection content scanning on ingest deferred (R-06): cleaner drops hidden text, DQ-16 instruction patterns | Owner | Open, Phase 3 |
+| I-6 | `A-OSFI-B10` gave 71 chunks on Windows and 72 in the Codespace; compare manifests to see whether the page changed | Owner | Open |
 
 ## Dependencies
 
@@ -35,7 +37,7 @@ items that need an owner and a date.
 | 2026-11-08 | Public repository; public data only | ADR-0007 |
 | 2026-11-08 | Stack choices | ADR-0001 to 0006 |
 | 2026-11-08 | Learning-environment residency exception | ADR-0008 |
-
+| 2026-11-19 | Defer prompt-injection ingest checks to Phase 3 | 11-gate-2-phase-1-review.md |
 
 ## Open verifications
 

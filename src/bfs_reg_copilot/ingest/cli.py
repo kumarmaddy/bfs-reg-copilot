@@ -8,23 +8,17 @@ from pathlib import Path
 
 import yaml
 
-from bfs_reg_copilot.ingest.chunk_store import write_chunks
-from bfs_reg_copilot.ingest.chunking import chunk_document
 from bfs_reg_copilot.ingest.clean import CleaningError
-from bfs_reg_copilot.ingest.cleaned_store import (
-    clean_record,
-    cleaned_file,
-    read_cleaned,
-    write_cleaned,
-)
 from bfs_reg_copilot.ingest.dq import run_dq
-from bfs_reg_copilot.ingest.fetcher import (
-    FetchError,
-    FetchRefused,
-    PoliteFetcher,
-    require_ingestible,
+from bfs_reg_copilot.ingest.fetcher import FetchRefused, require_ingestible
+from bfs_reg_copilot.ingest.pipeline import (
+    DataDirs,
+    PipelineError,
+    chunk_source,
+    clean_source,
+    fetch_sources,
 )
-from bfs_reg_copilot.ingest.store import RawStore, RawStoreError
+from bfs_reg_copilot.ingest.store import RawStoreError
 from bfs_reg_copilot.registry import Register, load_register
 
 EXIT_OK = 0
@@ -120,16 +114,11 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 def _fetch(register: Register, source_id: str, raw_dir: Path) -> int:
-    try:
-        with PoliteFetcher(register) as fetcher:
-            result = fetcher.fetch(source_id)
-        saved = RawStore(raw_dir).save(result)
-    except FetchRefused as exc:
-        print(f"REFUSED: {exc}")
-        return EXIT_REFUSED
-    except (FetchError, RawStoreError) as exc:
-        print(f"FAILED: {exc}")
-        return EXIT_FETCH_FAILED
+    outcome = fetch_sources(register, [source_id], raw_dir)[0]
+    if outcome.saved is None:
+        print(f"{'REFUSED' if outcome.refused else 'FAILED'}: {outcome.error}")
+        return EXIT_REFUSED if outcome.refused else EXIT_FETCH_FAILED
+    saved = outcome.saved
     record = saved.record
     if saved.repaired:
         state = "REPAIRED a damaged stored copy"
@@ -143,24 +132,19 @@ def _fetch(register: Register, source_id: str, raw_dir: Path) -> int:
 
 
 def _clean(register: Register, source_id: str, raw_dir: Path, out_dir: Path) -> int:
+    dirs = DataDirs(raw_dir, out_dir, out_dir)
     try:
-        require_ingestible(register, source_id)
+        summary = clean_source(register, source_id, dirs)
     except FetchRefused as exc:
         print(f"REFUSED: {exc}")
         return EXIT_REFUSED
-    try:
-        store = RawStore(raw_dir)
-        record = store.latest(source_id)
-        if record is None:
-            print(f"FAILED: nothing stored for {source_id}; run fetch first")
-            return EXIT_FETCH_FAILED
-        doc = clean_record(store, record)
-        path = write_cleaned(out_dir, doc)
-    except (RawStoreError, CleaningError) as exc:
+    except (PipelineError, RawStoreError, CleaningError) as exc:
         print(f"FAILED: {exc}")
         return EXIT_FETCH_FAILED
-    chars = sum(len(s.text) for s in doc.sections)
-    print(f"CLEANED: {source_id}  {len(doc.sections)} sections  {chars} chars  -> {path}")
+    print(
+        f"CLEANED: {source_id}  {summary.sections} sections  {summary.chars} chars  "
+        f"-> {summary.path}"
+    )
     return EXIT_OK
 
 
@@ -168,23 +152,17 @@ def _chunk(
     register: Register, source_id: str, raw_dir: Path, cleaned_dir: Path, out_dir: Path
 ) -> int:
     try:
-        require_ingestible(register, source_id)
+        summary = chunk_source(register, source_id, DataDirs(raw_dir, cleaned_dir, out_dir))
     except FetchRefused as exc:
         print(f"REFUSED: {exc}")
         return EXIT_REFUSED
-    record = RawStore(raw_dir).latest(source_id)
-    if record is None:
-        print(f"FAILED: nothing stored for {source_id}; run fetch first")
+    except (PipelineError, RawStoreError) as exc:
+        print(f"FAILED: {exc}")
         return EXIT_FETCH_FAILED
-    source_file = cleaned_file(cleaned_dir, source_id, record.sha256)
-    if not source_file.exists():
-        print(f"FAILED: no cleaned page for the latest fetch of {source_id}; run clean first")
-        return EXIT_FETCH_FAILED
-    doc = read_cleaned(source_file)
-    chunks = chunk_document(doc)
-    path = write_chunks(out_dir, chunks, doc.cleaner_version)
-    longest = max(len(c.text) for c in chunks)
-    print(f"CHUNKED: {source_id}  {len(chunks)} chunks  longest {longest} chars  -> {path}")
+    print(
+        f"CHUNKED: {source_id}  {summary.chunks} chunks  longest {summary.longest} chars  "
+        f"-> {summary.path}"
+    )
     return EXIT_OK
 
 

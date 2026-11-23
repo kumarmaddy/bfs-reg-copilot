@@ -9,6 +9,7 @@ authors = [{ name = "Kumar Maddipatla" }]
 dependencies = [
     "beautifulsoup4>=4.12,<5",
     "httpx>=0.28,<1",
+    "pg8000>=1.31,<2",
     "pydantic>=2.7,<3",
     "pyyaml>=6,<7",
 ]
@@ -56,3 +57,7 @@ files = ["src", "tests"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"
+[[tool.mypy.overrides]]
+# pg8000 ships no type information (ADR-0015); the storage code is wrapped and tested instead
+module = ["pg8000", "pg8000.*"]
+ignore_missing_imports = true

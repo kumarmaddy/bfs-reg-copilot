@@ -11,9 +11,23 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.0-pg17
+        env:
+          POSTGRES_PASSWORD: ci_only_throwaway
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      BFS_TEST_DATABASE_URL: postgresql://postgres:ci_only_throwaway@127.0.0.1:5432/postgres
     steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v7
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
       - run: uv sync --all-groups
       - run: uv run ruff check .
       - run: uv run ruff format --check .

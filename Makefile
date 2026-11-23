@@ -1,4 +1,4 @@
-.PHONY: setup lint fmt type test register check
+.PHONY: setup lint fmt type test register check db-up db-down
 
 setup:
 	uv sync --all-groups
@@ -19,6 +19,12 @@ test:
 	uv run pytest
 
 register:
-	uv run python -m bfs_reg_copilot.registry validate
+	uv run reg-register validate
 
 check: lint type test register
+
+db-up:
+	docker compose up -d --wait
+
+db-down:
+	docker compose down

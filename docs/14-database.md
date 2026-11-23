@@ -24,7 +24,7 @@ with the `BFS_DATABASE_URL` environment variable.
 | Table | Holds |
 |---|---|
 | `chunks` | One row per chunk: id, source, page hash, retrieval time, URL, heading path, text, generated full-text column. `superseded_at` is set when a newer page version is loaded |
-| `chunk_embeddings` | One row per (chunk, model): a 1,024-dimension vector. Empty until slice 2.4 |
+| `chunk_embeddings` | One row per (chunk, model): a 1,024-dimension vector. Filled by `embed` |
 | `schema_migrations` | Which migrations ran, with checksums |
 
 ## What `load` does
@@ -33,6 +33,33 @@ For each source it reads the chunk file with the most recent `retrieved_at`, ins
 leaves identical ones alone, updates changed ones (and deletes their embeddings), and marks chunks
 of older page versions of that source as superseded. Running it twice changes nothing. It prints
 the counts: for the Phase 1 snapshot the total is 624 chunks (B-10 is 71 here; see RAID I-6).
+
+## Embedding, and choosing the model
+
+```powershell
+uv run python -m bfs_reg_copilot.store embed --model bge-m3
+uv run python -m bfs_reg_copilot.store embed --model qwen3-embedding:0.6b
+uv run python -m bfs_reg_copilot.store status
+uv run python -m bfs_reg_copilot.store compare
+```
+
+`embed` sends each chunk (heading path, a newline, then the verbatim text) to the local Ollama
+server and stores the vector for that model. It only does chunks that lack a vector for the model,
+commits after every batch, and can be stopped and re-run. The Ollama address defaults to
+`http://127.0.0.1:11434` (override with `OLLAMA_HOST`). Nothing leaves the machine.
+
+`compare` is retrieval only: for each **dev-split** answerable question it embeds the question,
+takes the nearest chunks by cosine distance, and reports hit@1/3/5/10 with 95% intervals
+(section-level, the same rule as metric M4). It cannot see the hold-out ([ADR-0014](adr/0014-gold-set-labelling-and-sealed-holdout.md)).
+It refuses to run unless every current chunk is embedded for each model and the gold set's
+supporting sections are in the database.
+
+Decision rule, fixed before the numbers: choose the model with the higher dev hit@5; if the gap is
+under 5 percentage points, choose the one that embeds faster. With about 30 dev questions the
+intervals overlap, so a small gap is noise. The result and the choice go in the next ADR.
+
+Query formats differ (`bge-m3` takes the question as is; `qwen3-embedding` wants an instruction in
+front, which the code adds), so the comparison tests each model as its authors intend.
 
 ## Running the database tests
 

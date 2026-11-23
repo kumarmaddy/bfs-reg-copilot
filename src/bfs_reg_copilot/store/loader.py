@@ -116,3 +116,13 @@ def counts(conn: Conn) -> list[tuple[str, int, int]]:
         "FROM chunks c WHERE c.superseded_at IS NULL GROUP BY c.source_id ORDER BY 1"
     )
     return [(str(s), int(n), int(e)) for s, n, e in cur.fetchall()]
+
+
+def embedded_by_model(conn: Conn) -> list[tuple[str, int]]:
+    """(model, number of current chunks it has embedded)."""
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT e.model, count(*) FROM chunk_embeddings e JOIN chunks c USING (chunk_id) "
+        "WHERE c.superseded_at IS NULL GROUP BY e.model ORDER BY 1"
+    )
+    return [(str(m), int(n)) for m, n in cur.fetchall()]

@@ -24,6 +24,7 @@ values: **Draft** (written, not yet reviewed), **In review**, **Accepted**, **Su
 | 13 | [Evaluation harness](13-evaluation-harness.md) | How answers are scored, and what a person must grade | 3 | Draft |
 | 14 | [Database](14-database.md) | How to run the local database, the schema, and what loading does | 3 | Draft |
 | ADR | [Architecture decision records](adr/README.md) | Why the stack is what it is, and what we rejected | 0 | Accepted |
+| 15 | [Retrieval](15-retrieval.md) | The three retrievers, how to try them, and the rule for adopting hybrid | 3 | Draft |
 
 Machine-readable governance lives in [`../data/sources/register.yaml`](../data/sources/register.yaml)
 and is validated on every commit.

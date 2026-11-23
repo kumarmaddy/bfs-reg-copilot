@@ -16,7 +16,13 @@ from dataclasses import dataclass, field
 from bfs_reg_copilot.embed.ollama import Embedder
 from bfs_reg_copilot.embed.search import dense_search
 from bfs_reg_copilot.eval.gold import AnswerableItem, GoldSet, Split
-from bfs_reg_copilot.eval.metrics import hit_at_k, section_id, support_sections, wilson_interval
+from bfs_reg_copilot.eval.metrics import (
+    hit_at_k,
+    percentile,
+    section_id,
+    support_sections,
+    wilson_interval,
+)
 from bfs_reg_copilot.eval.types import PipelineAnswer
 from bfs_reg_copilot.store.db import Conn
 
@@ -33,6 +39,7 @@ class ModelResult:
     query_seconds: float
     misses_at_5: list[str] = field(default_factory=list)
     by_source: dict[str, tuple[int, int]] = field(default_factory=dict)  # source -> (hit@5, n)
+    latencies: list[float] = field(default_factory=list)  # seconds per question, if measured
 
     def rate(self, k: int) -> float:
         return self.hits[k] / self.n if self.n else 0.0
@@ -50,16 +57,15 @@ def missing_support(conn: Conn, items: Sequence[AnswerableItem]) -> list[str]:
     return [i.id for i in items if not support_sections(i) <= present]
 
 
-def evaluate_model(conn: Conn, embedder: Embedder, items: Sequence[AnswerableItem]) -> ModelResult:
-    started = time.monotonic()
-    vectors = embedder.embed_queries([i.question for i in items])
-    elapsed = time.monotonic() - started
+def score_rankings(
+    items: Sequence[AnswerableItem], rankings: Sequence[Sequence[str]]
+) -> tuple[dict[int, int], list[str], dict[str, tuple[int, int]]]:
+    """hits per k, ids missed at 5, and (hit@5, n) per source, for one ranking per item."""
     hits = dict.fromkeys(KS, 0)
     misses: list[str] = []
     by_source: dict[str, list[int]] = defaultdict(lambda: [0, 0])
-    for item, vector in zip(items, vectors, strict=True):
-        retrieved = tuple(dense_search(conn, embedder.model.name, vector, max(KS)))
-        answer = PipelineAnswer(text="", refused=False, retrieved_chunks=retrieved)
+    for item, ranking in zip(items, rankings, strict=True):
+        answer = PipelineAnswer(text="", refused=False, retrieved_chunks=tuple(ranking))
         for k in KS:
             hits[k] += hit_at_k(item, answer, k)
         ok5 = hit_at_k(item, answer, 5)
@@ -67,14 +73,17 @@ def evaluate_model(conn: Conn, embedder: Embedder, items: Sequence[AnswerableIte
         by_source[item.source][1] += 1
         if not ok5:
             misses.append(item.id)
+    return hits, misses, {s: (a, b) for s, (a, b) in by_source.items()}
+
+
+def evaluate_model(conn: Conn, embedder: Embedder, items: Sequence[AnswerableItem]) -> ModelResult:
+    started = time.monotonic()
+    vectors = embedder.embed_queries([i.question for i in items])
+    elapsed = time.monotonic() - started
+    rankings = [dense_search(conn, embedder.model.name, v, max(KS)) for v in vectors]
+    hits, misses, by_source = score_rankings(items, rankings)
     return ModelResult(
-        embedder.model.name,
-        embedder.is_test_double,
-        len(items),
-        hits,
-        elapsed,
-        misses,
-        {s: (a, b) for s, (a, b) in by_source.items()},
+        embedder.model.name, embedder.is_test_double, len(items), hits, elapsed, misses, by_source
     )
 
 
@@ -82,9 +91,7 @@ def render(results: Sequence[ModelResult]) -> str:
     lines = ["Retrieval comparison on the DEV split (hit@k, section level)", ""]
     for r in results:
         label = " (TEST DOUBLE)" if r.is_test_double else ""
-        lines.append(
-            f"{r.model}{label}: {r.n} dev questions, query embedding {r.query_seconds:.1f}s"
-        )
+        lines.append(f"{r.model}{label}: {r.n} dev questions, query time {r.query_seconds:.1f}s")
         for k in KS:
             lo, hi = wilson_interval(r.hits[k], r.n)
             lines.append(
@@ -92,6 +99,11 @@ def render(results: Sequence[ModelResult]) -> str:
             )
         per_source = ", ".join(f"{s} {a}/{b}" for s, (a, b) in sorted(r.by_source.items()))
         lines.append(f"  hit@5 by source: {per_source}")
+        if r.latencies:
+            p50, p95 = percentile(r.latencies, 0.5), percentile(r.latencies, 0.95)
+            lines.append(
+                f"  latency per question: p50 {p50 * 1000:.0f} ms, p95 {p95 * 1000:.0f} ms"
+            )
         lines.append(f"  missed at 5: {', '.join(r.misses_at_5) or 'none'}")
         lines.append("")
     if len(results) == 2:

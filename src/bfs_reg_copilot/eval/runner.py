@@ -85,12 +85,13 @@ def run_eval(
     commit: str,
     limit: int | None = None,
     clock: Callable[[], datetime] = lambda: datetime.now(UTC),
+    progress: Callable[[int, int, str], None] | None = None,
 ) -> tuple[RunMeta, list[RunRecord]]:
     started = clock()
     ids, skipped = select_items(gold, split, limit)
     by_id = {i.id: i for i in gold.items}
     records: list[RunRecord] = []
-    for item_id in ids:
+    for position, item_id in enumerate(ids, start=1):
         item = by_id[item_id]
         began = time.perf_counter()
         answer: PipelineAnswer | None = None
@@ -110,6 +111,8 @@ def run_eval(
                 latency_s=time.perf_counter() - began,
             )
         )
+        if progress:
+            progress(position, len(ids), item_id)
     finished = clock()
     meta = RunMeta(
         run_id=f"{started:%Y%m%dT%H%M%SZ}-{pipeline.name}-{split.value}",

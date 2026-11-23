@@ -1,9 +1,12 @@
-"""Command line for the gold set and the scoring harness. Local files only; no network."""
+"""Command line for the gold set and the scoring harness.
+
+Only the `baseline` pipeline needs the local database and the local model server; everything else
+reads local files."""
 
 from __future__ import annotations
 
 import argparse
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
 
 from bfs_reg_copilot.eval.fakes import DOUBLES
@@ -33,6 +36,8 @@ from bfs_reg_copilot.eval.runner import (
     run_eval,
     write_run,
 )
+from bfs_reg_copilot.eval.types import Pipeline
+from bfs_reg_copilot.rag.factory import DEFAULT_GENERATOR
 
 EXIT_OK = 0
 EXIT_INVALID = 1
@@ -40,6 +45,7 @@ EXIT_UNREADABLE = 2
 EXIT_CHUNK_MISMATCH = 3
 EXIT_HOLDOUT_REFUSED = 4
 
+BASELINE = "baseline"
 DEFAULT_GOLD = Path("eval/gold/gold-v1.yaml")
 DEFAULT_CHUNK_DIR = Path("data/curated")
 DEFAULT_RUNS_DIR = Path("eval/runs")
@@ -65,9 +71,11 @@ def _build_parser() -> argparse.ArgumentParser:
     run.add_argument(
         "--pipeline",
         required=True,
-        choices=sorted(DOUBLES),
-        help="test doubles only for now; real pipelines arrive in later slices",
+        choices=[*sorted(DOUBLES), BASELINE],
+        help="a test double, or `baseline` (needs the database and Ollama)",
     )
+    run.add_argument("--model", default=DEFAULT_GENERATOR, help="generator for `baseline`")
+    run.add_argument("--k", type=int, default=5, help="chunks given to the generator")
     run.add_argument("--split", choices=[s.value for s in Split], default=Split.DEV.value)
     run.add_argument("--limit", type=int, default=None, help="at most N items per kind (smoke)")
     run.add_argument("--out-dir", type=Path, default=DEFAULT_RUNS_DIR, help="where runs are stored")
@@ -110,7 +118,59 @@ def _run(gold: GoldSet, args: argparse.Namespace) -> int:
     except HoldoutRefused as exc:
         print(f"ERROR {exc}")
         return EXIT_HOLDOUT_REFUSED
-    pipeline = DOUBLES[args.pipeline](gold)
+    if args.pipeline == BASELINE:
+        return _run_baseline(gold, args, split)
+    return _finish_run(gold, args, split, DOUBLES[args.pipeline](gold))
+
+
+def _run_baseline(gold: GoldSet, args: argparse.Namespace, split: Split) -> int:
+    from contextlib import closing
+
+    from pg8000.exceptions import DatabaseError, InterfaceError
+
+    from bfs_reg_copilot.gateway.types import GatewayError
+    from bfs_reg_copilot.rag.factory import build_baseline
+    from bfs_reg_copilot.store.db import connect, database_url, describe
+    from bfs_reg_copilot.store.loader import counts, embedded_by_model
+
+    try:
+        conn = connect()
+    except (OSError, InterfaceError, DatabaseError) as exc:
+        print(f"ERROR cannot connect to {describe(database_url())}: {type(exc).__name__}: {exc}")
+        return EXIT_UNREADABLE
+    with closing(conn):
+        total = sum(t for _, t, _ in counts(conn))
+        have = dict(embedded_by_model(conn)).get("bge-m3", 0)
+        if not total or have != total:
+            print(f"ERROR the database has {have}/{total} chunks embedded with bge-m3")
+            return EXIT_UNREADABLE
+        try:
+            pipeline = build_baseline(conn, args.model, args.k)
+            pipeline.check_ready()
+        except GatewayError as exc:
+            print(f"ERROR {exc}")
+            return EXIT_UNREADABLE
+        code = _finish_run(gold, args, split, pipeline, progress=_print_progress)
+        print(f"malformed model outputs: {pipeline.malformed}")
+        usage = pipeline._gateway.usage
+        print(
+            f"model calls: {usage.calls}, prompt tokens {usage.prompt_tokens}, "
+            f"completion tokens {usage.completion_tokens}, model time {usage.seconds:.0f}s"
+        )
+        return code
+
+
+def _print_progress(done: int, total: int, item_id: str) -> None:
+    print(f"  {done}/{total} {item_id}", flush=True)
+
+
+def _finish_run(
+    gold: GoldSet,
+    args: argparse.Namespace,
+    split: Split,
+    pipeline: Pipeline,
+    progress: Callable[[int, int, str], None] | None = None,
+) -> int:
     meta, records = run_eval(
         gold,
         pipeline,
@@ -118,6 +178,7 @@ def _run(gold: GoldSet, args: argparse.Namespace) -> int:
         gold_hash=gold_sha256(args.gold),
         commit=git_commit(args.repo_root),
         limit=args.limit,
+        progress=progress,
     )
     run_dir = write_run(args.out_dir, meta, records)
     if split == Split.HOLDOUT:

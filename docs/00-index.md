@@ -25,6 +25,7 @@ values: **Draft** (written, not yet reviewed), **In review**, **Accepted**, **Su
 | 14 | [Database](14-database.md) | How to run the local database, the schema, and what loading does | 3 | Draft |
 | ADR | [Architecture decision records](adr/README.md) | Why the stack is what it is, and what we rejected | 0 | Accepted |
 | 15 | [Retrieval](15-retrieval.md) | The three retrievers, how to try them, and the rule for adopting hybrid | 3 | Draft |
+| 16 | [Generator](16-generator.md) | How the baseline answers, how to run it, and how to read the first results | 3 | Draft |
 
 Machine-readable governance lives in [`../data/sources/register.yaml`](../data/sources/register.yaml)
 and is validated on every commit.

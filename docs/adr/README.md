@@ -21,6 +21,7 @@ would make us revisit it. Format: a short adaptation of MADR. Template: [0000](0
 | [0014](0014-gold-set-labelling-and-sealed-holdout.md) | Gold set drafted from primary text, accepted by the owner, hold-out sealed by rule | Accepted |
 | [0015](0015-storage-schema-and-embedding-size.md) | Plain-SQL migrations, one chunk table, embeddings per model at 1024 dimensions | Accepted |
 | [0016](0016-embedding-model-bge-m3.md) | bge-m3 as the embedding model, chosen on dev-split hit@5 | Accepted |
+| [0017](0017-dense-only-retrieval-baseline.md) | Dense-only retrieval is the baseline; hybrid is built but off | Accepted |
 
 "Accepted" here means accepted by the project owner at Gate 0 on 2026-11-08. Evidence quoted from
 news articles, job postings and aggregator sites is indicative, not authoritative.

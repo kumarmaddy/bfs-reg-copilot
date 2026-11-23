@@ -26,8 +26,8 @@ of a few points between two runs is noise.
 ```python
 class PipelineAnswer:
     text: str
-    refused: bool                      # the pipeline's own "cannot answer from the sources"
-    cited_chunks: tuple[str, ...]      # chunk ids the answer cites
+    refused: bool  # the pipeline's own "cannot answer from the sources"
+    cited_chunks: tuple[str, ...]  # chunk ids the answer cites
     retrieved_chunks: tuple[str, ...]  # ranked, best first
 ```
 

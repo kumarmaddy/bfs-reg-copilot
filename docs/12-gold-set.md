@@ -29,8 +29,9 @@ FINTRAC RBA 5. Difficulty of answerable items: 8 easy, 27 medium, 5 hard (multi-
 
 Once, with `random.Random(20261123)`: one answerable item per source (ids sorted), one extra from
 A-OSFI-E23, three refusals and one scorable adversarial item. 12 of 60 (20%). The seed and method
-are in the file. **The hold-out is not run while tuning.** It runs at gates, and each run is logged
-in the table below.
+are in the file. **The hold-out is not run while tuning.** It runs at gates only. The harness
+refuses a hold-out run without `--confirm-holdout` and a reason, and logs each run in
+`eval/holdout-log.jsonl` ([13](13-evaluation-harness.md)).
 
 ## Commands
 
@@ -66,3 +67,4 @@ to the change log. Do not edit items only to make a score look better.
 | Date | Change | Why |
 |---|---|---|
 | 2026-11-23 | Set v1 created: 60 items; hold-out sealed | Gate 3 evidence needs a fixed measurement before any tuning |
+| 2026-11-23 | Hold-out seal enforced in code by the harness | A rule that depends on memory is not a control |

@@ -21,6 +21,7 @@ values: **Draft** (written, not yet reviewed), **In review**, **Accepted**, **Su
 | 10 | [Running the ingest DAG](10-orchestration.md) | How to run and verify the Airflow pipeline | 2 | Accepted |
 | 11 | [Gate 2: Phase 1 review](11-gate-2-phase-1-review.md) | Whether Phase 2 may start | 2 | Draft |
 | 12 | [Gold set](12-gold-set.md) | What M1 and M2 are measured on, and its limits | 3 | Draft |
+| 13 | [Evaluation harness](13-evaluation-harness.md) | How answers are scored, and what a person must grade | 3 | Draft |
 | ADR | [Architecture decision records](adr/README.md) | Why the stack is what it is, and what we rejected | 0 | Accepted |
 
 Machine-readable governance lives in [`../data/sources/register.yaml`](../data/sources/register.yaml)

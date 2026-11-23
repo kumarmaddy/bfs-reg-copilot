@@ -1,6 +1,6 @@
 # Evaluation
 
-Gold set and evaluation harness arrive in Phase 2. Specification: `docs/02-success-metrics.md`
-(at least 60 questions: 40 answerable, 15 unanswerable, 5 adversarial; 80/20 dev/hold-out).
-
-Gold items contain original questions and paraphrased key points only, never copied source text.
+- `gold/gold-v1.yaml`: the gold set (60 items; questions, paraphrased key points and chunk ids only,
+  never copied source text). Method and limits: `docs/12-gold-set.md`.
+- Check it: `uv run python -m bfs_reg_copilot.eval validate`.
+- The scoring harness arrives in slice 2.2. Specification: `docs/02-success-metrics.md`.

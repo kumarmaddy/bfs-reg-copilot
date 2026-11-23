@@ -1,6 +1,6 @@
 # Documentation index
 
-Project: **bfs-reg-copilot**. Document set version 0.3, dated 2026-11-20. Phase 0 (frame and govern) and Phase 1 (data pipeline) complete.
+Project: **bfs-reg-copilot**. Document set version 0.4, dated 2026-11-23. Phases 0 and 1 complete; Phase 2 (baseline RAG and evaluation) in progress.
 
 ## How to use this set
 
@@ -20,6 +20,7 @@ values: **Draft** (written, not yet reviewed), **In review**, **Accepted**, **Su
 | 09 | [Data-quality checks](09-data-quality-checks.md) | What must be true of every chunk before it is used | 2 | Accepted |
 | 10 | [Running the ingest DAG](10-orchestration.md) | How to run and verify the Airflow pipeline | 2 | Accepted |
 | 11 | [Gate 2: Phase 1 review](11-gate-2-phase-1-review.md) | Whether Phase 2 may start | 2 | Draft |
+| 12 | [Gold set](12-gold-set.md) | What M1 and M2 are measured on, and its limits | 3 | Draft |
 | ADR | [Architecture decision records](adr/README.md) | Why the stack is what it is, and what we rejected | 0 | Accepted |
 
 Machine-readable governance lives in [`../data/sources/register.yaml`](../data/sources/register.yaml)

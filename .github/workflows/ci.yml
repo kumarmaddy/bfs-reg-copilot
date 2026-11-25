@@ -32,6 +32,10 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run mypy
+      - name: Evaluation smoke (test doubles, no model; checks the harness, not answer quality)
+        run: |
+          uv run python -m bfs_reg_copilot.eval validate
+          uv run python -m bfs_reg_copilot.eval run --pipeline oracle --limit 3 --out-dir "$RUNNER_TEMP/eval-runs"
       - run: uv run pytest
       - run: uv run reg-register validate
       - name: Dependency audit

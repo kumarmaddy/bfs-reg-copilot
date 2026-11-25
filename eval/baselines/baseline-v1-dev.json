@@ -1,0 +1,18 @@
+{
+  "run_id": "20261125T100230Z-baseline-dev",
+  "git_commit": "7d1b4f3158a3bacfc6f2d3da85cdbfffde304afa",
+  "split": "dev",
+  "pipeline": "baseline",
+  "gold_version": 1,
+  "gold_sha256": "bb7ee80afbf6d5644a226975bfba40eeeee4357a4e0759e8dbc50f3d79d4c0b6",
+  "grades_file": "baseline-v1-dev.grades.csv",
+  "model": "qwen2.5:7b",
+  "model_digest": "845dbda0ea48",
+  "results": {
+    "m1": {"passed": 22, "total": 32, "graded_by_person": 30, "failed_mechanically": 2},
+    "m2": {"passed": 12, "total": 12},
+    "m4": {"passed": 30, "total": 32},
+    "m5": {"fabricated": 0, "citations": 46},
+    "m8": {"passed": 3, "total": 3}
+  }
+}

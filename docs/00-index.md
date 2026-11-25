@@ -28,6 +28,8 @@ values: **Draft** (written, not yet reviewed), **In review**, **Accepted**, **Su
 | 17 | [Baseline v1 record](17-baseline-v1.md) | The first measured M1, M2, M4 and M5 on dev, and what to compare later changes against | 3 | Draft |
 | 18 | [The API](18-api.md) | How to run the API, what it returns, and its limits | 3 | Draft |
 | 19 | [Evaluation in CI](19-ci-evaluation.md) | What the CI evaluation checks, and what it cannot | 3 | Draft |
+| 20 | [Gate 3: Phase 2 review](20-gate-3-phase-2-review.md) | Whether Phase 3 may start | 3 | Draft |
+
 
 | ADR | [Architecture decision records](adr/README.md) | Why the stack is what it is, and what we rejected | 0 | Accepted |
 

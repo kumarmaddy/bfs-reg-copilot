@@ -23,9 +23,12 @@ values: **Draft** (written, not yet reviewed), **In review**, **Accepted**, **Su
 | 12 | [Gold set](12-gold-set.md) | What M1 and M2 are measured on, and its limits | 3 | Draft |
 | 13 | [Evaluation harness](13-evaluation-harness.md) | How answers are scored, and what a person must grade | 3 | Draft |
 | 14 | [Database](14-database.md) | How to run the local database, the schema, and what loading does | 3 | Draft |
-| ADR | [Architecture decision records](adr/README.md) | Why the stack is what it is, and what we rejected | 0 | Accepted |
 | 15 | [Retrieval](15-retrieval.md) | The three retrievers, how to try them, and the rule for adopting hybrid | 3 | Draft |
 | 16 | [Generator](16-generator.md) | How the baseline answers, how to run it, and how to read the first results | 3 | Draft |
+| 17 | [Baseline v1 record](17-baseline-v1.md) | The first measured M1, M2, M4 and M5 on dev, and what to compare later changes against | 3 | Draft |
+
+
+| ADR | [Architecture decision records](adr/README.md) | Why the stack is what it is, and what we rejected | 0 | Accepted |
 
 Machine-readable governance lives in [`../data/sources/register.yaml`](../data/sources/register.yaml)
 and is validated on every commit.

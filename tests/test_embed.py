@@ -35,7 +35,7 @@ from bfs_reg_copilot.eval.gold import AnswerableItem, GoldSet
 from bfs_reg_copilot.ingest.chunk_store import write_chunks
 from bfs_reg_copilot.ingest.chunking import Chunk
 from bfs_reg_copilot.store.db import EMBEDDING_DIMS, Conn
-from bfs_reg_copilot.store.loader import counts, embedded_by_model, load_source
+from bfs_reg_copilot.store.loader import corpus_fingerprint, counts, embedded_by_model, load_source
 from dbhelpers import make_chunk as _make_chunk
 from dbhelpers import needs_db
 
@@ -154,6 +154,31 @@ def test_client_errors_are_not_retried() -> None:
     with pytest.raises(EmbedError):
         embedder.embed_documents(["a"])
     assert calls["n"] == 1
+
+
+def test_model_digest_comes_from_the_model_list_and_is_looked_up_once() -> None:
+    calls = {"n": 0}
+
+    def tags(request: httpx.Request) -> httpx.Response:
+        calls["n"] += 1
+        assert request.url.path == "/api/tags"
+        models = [
+            {"name": "other:latest", "digest": "f" * 64},
+            {"name": "bge-m3:latest", "digest": "a" * 64},
+        ]
+        return httpx.Response(200, json={"models": models})
+
+    embedder = _mock(httpx.MockTransport(tags))
+    assert embedder.model_digest() == "a" * 12
+    assert embedder.model_digest() == "a" * 12
+    assert calls["n"] == 1
+
+
+def test_model_digest_is_unknown_when_ollama_will_not_say() -> None:
+    def down(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("refused")
+
+    assert _mock(httpx.MockTransport(down)).model_digest() == "unknown"
 
 
 def test_vector_literal_round_trips_precision() -> None:
@@ -335,3 +360,25 @@ def test_missing_support_flags_other_page_versions(migrated: Conn, tmp_path: Pat
         }
     )
     assert missing_support(migrated, [present, elsewhere]) == ["G-T-009"]
+
+
+@needs_db
+def test_corpus_fingerprint_changes_with_text_and_ignores_superseded(
+    migrated: Conn, tmp_path: Path
+) -> None:
+    sha = "a" * 64
+    load_source(migrated, SRC, write_chunks(tmp_path / "v1", (make_chunk(sha=sha, n=1),), "1"))
+    first = corpus_fingerprint(migrated)
+    assert first.startswith("1:")
+    assert corpus_fingerprint(migrated) == first  # stable between calls
+
+    reworded = make_chunk(sha=sha, n=1, text="Banks must now also assess cloud risk.")
+    load_source(migrated, SRC, write_chunks(tmp_path / "v2", (reworded,), "1"))
+    second = corpus_fingerprint(migrated)
+    assert second != first  # same chunk id, different text
+
+    newer = make_chunk(sha="b" * 64, n=1)
+    load_source(migrated, SRC, write_chunks(tmp_path / "v3", (newer,), "1"))
+    third = corpus_fingerprint(migrated)
+    assert third.startswith("1:")  # the superseded page version is not counted
+    assert third != second

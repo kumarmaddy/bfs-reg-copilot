@@ -45,8 +45,25 @@ class OllamaEmbedder:
         self.model = model
         self._retries = retries
         self._sleep = sleep
+        self._host = (host or ollama_host()).rstrip("/")
+        self._digest: str | None = None
         self._url = (host or ollama_host()).rstrip("/") + "/api/embed"
         self._client = client or httpx.Client(timeout=300.0)
+
+    def model_digest(self) -> str:
+        """The exact embedding model build (first 12 characters), so a run can be tied to it.
+        'unknown' if Ollama will not say. Looked up once."""
+        if self._digest is None:
+            try:
+                response = self._client.get(f"{self._host}/api/tags")
+                response.raise_for_status()
+                models = response.json().get("models", [])
+                names = (self.model.name, f"{self.model.name}:latest")
+                match: dict[str, Any] = next((m for m in models if m.get("name") in names), {})
+                self._digest = str(match.get("digest", "unknown"))[:12]
+            except (httpx.HTTPError, ValueError):
+                self._digest = "unknown"
+        return self._digest
 
     def _post(self, payload: dict[str, Any]) -> dict[str, Any]:
         """POST with retries for transport errors and 5xx (Ollama drops connections when it

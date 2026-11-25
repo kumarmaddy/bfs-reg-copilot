@@ -6,7 +6,7 @@ added later (a score floor for refusals, reranking, citation repair) is judged a
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import Protocol
 
 from bfs_reg_copilot.eval.types import PipelineAnswer
@@ -52,11 +52,13 @@ class RagPipeline:
         chunks: ChunkSource,
         gateway: LLMGateway,
         k: int = DEFAULT_K,
+        provenance: Mapping[str, str] | None = None,
     ) -> None:
         self._retriever = retriever
         self._chunks = chunks
         self._gateway = gateway
         self._k = k
+        self._provenance = dict(provenance or {})
         self.is_test_double = retriever.is_test_double or gateway.is_test_double
         self.malformed = 0
 
@@ -74,6 +76,7 @@ class RagPipeline:
             "k": str(self._k),
             "prompt_version": PROMPT_VERSION,
             "max_answer_tokens": str(MAX_ANSWER_TOKENS),
+            **self._provenance,  # embedding model digest and corpus fingerprint, when known
         }
 
     def answer(self, question: str) -> PipelineAnswer:

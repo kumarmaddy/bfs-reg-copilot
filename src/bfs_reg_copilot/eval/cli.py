@@ -46,7 +46,7 @@ EXIT_CHUNK_MISMATCH = 3
 EXIT_HOLDOUT_REFUSED = 4
 
 BASELINE = "baseline"
-DEFAULT_GOLD = Path("eval/gold/gold-v1.yaml")
+DEFAULT_GOLD = Path("eval/gold/gold-v2.yaml")
 DEFAULT_CHUNK_DIR = Path("data/curated")
 DEFAULT_RUNS_DIR = Path("eval/runs")
 DEFAULT_HOLDOUT_LOG = Path("eval/holdout-log.jsonl")

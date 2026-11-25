@@ -8,6 +8,7 @@ deleted, because they describe text that no longer exists.
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -126,3 +127,17 @@ def embedded_by_model(conn: Conn) -> list[tuple[str, int]]:
         "WHERE c.superseded_at IS NULL GROUP BY e.model ORDER BY 1"
     )
     return [(str(m), int(n)) for m, n in cur.fetchall()]
+
+
+def corpus_fingerprint(conn: Conn) -> str:
+    """A short fingerprint of the current corpus: 'count:hash'. It covers every current chunk's id
+    and text, so a re-loaded page, a changed cleaning rule or a changed chunk boundary shows up in
+    the run record. Superseded page versions are ignored, as retrieval ignores them."""
+    cur = conn.cursor()
+    cur.execute("SELECT chunk_id, text FROM chunks WHERE superseded_at IS NULL ORDER BY chunk_id")
+    rows = cur.fetchall()
+    conn.rollback()  # end the read transaction
+    digest = hashlib.sha256()
+    for chunk_id, text in rows:
+        digest.update(f"{chunk_id}\0{text}\0".encode())
+    return f"{len(rows)}:{digest.hexdigest()[:12]}"

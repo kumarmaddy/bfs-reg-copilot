@@ -31,7 +31,7 @@ EXIT_EMBED_FAILED = 4
 EXIT_GOLD_MISMATCH = 5
 
 DEFAULT_CURATED_DIR = Path("data/curated")
-DEFAULT_GOLD = Path("eval/gold/gold-v1.yaml")
+DEFAULT_GOLD = Path("eval/gold/gold-v2.yaml")
 
 
 def _build_parser() -> argparse.ArgumentParser:

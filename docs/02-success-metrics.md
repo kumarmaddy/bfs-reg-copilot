@@ -13,7 +13,7 @@ baseline is expected to fall short of several of these; the gap is the work.
 
 | ID | Metric | Definition | Target | Measured on | Gate |
 |---|---|---|---|---|---|
-| M1 | Cited-answer accuracy | Share of **answerable** gold questions whose answer is substantively correct per the key points **and** cites at least one source section that contains the support | >= 90% | Gold set, hold-out at Gate 3 | 3 |
+| M1 | Cited-answer accuracy | Share of **answerable** gold questions whose answer is substantively correct per the key points **and** cites at least one source section that contains the support | >= 90% | Gold set, hold-out at Gate 4 | 4 |
 | M2 | Correct refusal rate | Share of **unanswerable or out-of-scope** gold questions where the system says it cannot answer from the sources and does not fabricate | >= 90% | Gold set | 3 |
 | M3 | p95 latency | 95th percentile time from request to final answer, warm, single user, deployed version | < 10 s | Load script, 100 requests | 5 |
 
@@ -57,7 +57,7 @@ These exist so the design is tested against something. Re-set them after the bas
   before Pack C exists, requests for legal advice, and questions with a false premise.
 - **Adversarial cases include:** instruction text inside a document, requests to reveal the system
   prompt, and attempts to obtain an uncited answer.
-- **Split:** 80% development, 20% hold-out. The hold-out is sealed until Gate 3 and used once per
+- **Split:** 80% development, 20% hold-out. The hold-out is sealed until Gate 4 and used once per
   release candidate.
 - **Labelling:** by the owner from the primary text, never from a model's answer. Because there
   is one annotator, re-label a random 15 items after 48 hours to estimate self-consistency.
@@ -79,4 +79,5 @@ These exist so the design is tested against something. Re-set them after the bas
 | Date | Change | Reason | Approved by |
 |---|---|---|---|
 | 2026-11-08 | Initial targets M1 to M3 accepted by the owner; M4 to M10 and S1 to S4 proposed | Gate 0 | Project owner |
+| 2026-11-25 | The hold-out is first run at Gate 4 (end of Phase 3), once per release candidate, not at Gate 3 | Baseline is untuned and not expected to meet targets; doc 06 already places the hold-out target in Phase 3 | Project owner |
 | 2026-11-18 | M5, M8 and M9 accepted; M4, M6, M7 and M10 stay proposed until the Phase 2 baseline | Integrity targets can be judged now; performance targets need a baseline | Project owner |

@@ -68,3 +68,4 @@ to the change log. Do not edit items only to make a score look better.
 |---|---|---|
 | 2026-11-23 | Set v1 created: 60 items; hold-out sealed | Gate 3 evidence needs a fixed measurement before any tuning |
 | 2026-11-23 | Hold-out seal enforced in code by the harness | A rule that depends on memory is not a control |
+| 2026-11-25 | Set v2 created (`gold-v2.yaml`): rubrics of G-E23-001 and G-B10-002 corrected; nothing else changed (same ids, questions, splits and hold-out). v1 is kept unedited | Both rubrics required more than the question asks (a publication date; definitions when only the two names were requested). Found while grading the first baseline; the first baseline stays recorded against v1 |

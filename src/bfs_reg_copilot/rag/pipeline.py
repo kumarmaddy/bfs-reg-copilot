@@ -12,7 +12,7 @@ from typing import Protocol
 from bfs_reg_copilot.eval.types import PipelineAnswer
 from bfs_reg_copilot.gateway.types import LLMGateway, Usage
 from bfs_reg_copilot.rag.output import answer_schema, to_pipeline_answer
-from bfs_reg_copilot.rag.prompt import PROMPT_VERSION, ContextChunk, build_messages
+from bfs_reg_copilot.rag.prompt import PROMPT_VERSION, SYSTEMS, ContextChunk, build_messages
 from bfs_reg_copilot.retrieve.types import Retriever
 from bfs_reg_copilot.store.db import Conn
 
@@ -53,7 +53,11 @@ class RagPipeline:
         gateway: LLMGateway,
         k: int = DEFAULT_K,
         provenance: Mapping[str, str] | None = None,
+        prompt_version: str = PROMPT_VERSION,
     ) -> None:
+        if prompt_version not in SYSTEMS:
+            raise ValueError(f"unknown prompt version {prompt_version!r}")
+        self._prompt_version = prompt_version
         self._retriever = retriever
         self._chunks = chunks
         self._gateway = gateway
@@ -74,7 +78,7 @@ class RagPipeline:
             **self._gateway.describe(),
             "retriever": self._retriever.name,
             "k": str(self._k),
-            "prompt_version": PROMPT_VERSION,
+            "prompt_version": self._prompt_version,
             "max_answer_tokens": str(MAX_ANSWER_TOKENS),
             **self._provenance,  # embedding model digest and corpus fingerprint, when known
         }
@@ -83,7 +87,7 @@ class RagPipeline:
         hits = self._retriever.retrieve(question, self._k)
         context = self._chunks.fetch([h.chunk_id for h in hits])
         completion = self._gateway.complete(
-            build_messages(question, context),
+            build_messages(question, context, self._prompt_version),
             schema=answer_schema(),
             max_tokens=MAX_ANSWER_TOKENS,
         )

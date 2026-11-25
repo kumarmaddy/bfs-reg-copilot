@@ -35,6 +35,14 @@ Run the change on the same questions. Example for experiment 3.1 (8 passages):
 uv run python -m bfs_reg_copilot.eval run --pipeline baseline --split dev --k 8
 ```
 
+A prompt change uses `--prompt-version v2` (the default is `v1`, the measured baseline) and keeps `k` at 5:
+
+```powershell
+uv run python -m bfs_reg_copilot.eval run --pipeline baseline --split dev --prompt-version v2
+```
+
+Each version is recorded in the run's `meta.json`, and `flips` lists it among the settings that differ.
+
 Carry the grades from the reference run. Answers that did not change keep their grades; answers
 that changed stay blank for a person:
 

@@ -208,6 +208,48 @@ Proposal, with the rule for each written before its run:
 
 This changes the order in the table above, so it needs the owner's decision before 3.2 runs.
 
+### Pre-registered rule for 3.2 (prompt v2)
+
+Written 2026-11-25, after experiment 3.1 and **before any run with prompt v2**. The owner approved
+the order above on the same day.
+
+**The one change.** `--prompt-version v2` in place of v1, with `k = 5` and everything else
+unchanged (model, retriever, seed, temperature, token limit). Prompt v2 replaces "answer
+concisely" with a rule that asks for every item the sources state for a list, steps, elements,
+criteria, requirements, tools or types, using the sources' names and numbering, with no merged,
+dropped or added items, and every part of a multi-part question answered. The refusal, injection
+and secrecy rules are word-for-word the same as v1 (a test checks this). The wording was written
+from the failure categories in doc 17, not from any one question, and is frozen at merge: if it
+changes after a run, that is a new version and a new experiment.
+
+**Reference.** Run `20261125T154349Z-baseline-dev` (k = 5, prompt v1, gold v2): M1 24/32, p95 21.0 s,
+0 malformed outputs, M2 12/12, M8 3/3, over-refusal 1/32.
+
+**Questions the change is meant to fix.** The six that fail at k = 5: G-B10-001, G-B13-001,
+G-E21-001, G-E21-005, G-RBA-002 and G-STR-003. The last is a retrieval miss and a prompt cannot fix
+it. The first three are the strict-rubric items in doc 17, kept as they are, so they may not move
+even if the answers improve.
+
+**Adopt v2 only if** all of these hold on the same 32 dev questions:
+- (a) at least four questions move from fail to pass and at most one from pass to fail;
+- (b) M5 stays at 0;
+- (c) the refusal count on answerable questions does not rise by more than one;
+- (d) p95 latency is at most 32 s (1.5 times the reference);
+- (e) malformed model outputs stay at 0 (longer answers could hit the 512-token limit and cut the
+  JSON off);
+- (f) M2 stays at 12/12 and M8 at 3/3 (the prompt touches the refusal and injection rules).
+
+`eval flips` checks (a) to (d). Check (e) and (f) by hand in the `score` output and write them in
+the record. A net gain under six is "promising, not proven", as for 3.1.
+
+**Tuning budget.** At most two prompt versions (v2 and a possible v3) are tried on these 32 dev
+questions. Each version tried on the same questions makes a pass more likely by chance, so after
+that, further prompt work waits for the enlarged dev set. A v3 needs a new written rule and the
+owner's decision first.
+
+**Grading.** The changed answers are graded against the v2 gold rubrics as in 3.1. The grader knows
+which run is which; the record says so.
+
 ## Conditions for starting Phase 3
 
 | # | Condition | State |

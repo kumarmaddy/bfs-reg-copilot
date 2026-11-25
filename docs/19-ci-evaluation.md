@@ -26,8 +26,8 @@ doc 17.
 
 ## When a check fails
 
-- **"The gold file changed after baseline v1 was recorded."** Do not edit `gold-v1.yaml` to make
-  the test pass. Add a labelled gold v2 (rubric fixes such as G-E23-001 and G-B10-002 belong
+- **"A gold file changed after its baseline was recorded."** Do not edit a recorded gold file
+  (`gold-v1.yaml`, `gold-v2.yaml`) to make the test pass. Add a labelled new gold version (rubric fixes such as G-E23-001 and G-B10-002 belong
   there), re-run the baseline against it, record it, and add its manifest next to the v1 one.
   Keep the v1 files: they are the evidence for the older number.
 - **The M1 re-derivation fails.** The grades file and the manifest disagree. Fix whichever is

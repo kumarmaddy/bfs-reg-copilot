@@ -8,10 +8,18 @@ from bfs_reg_copilot.gateway.ollama import OllamaGateway
 from bfs_reg_copilot.rag.pipeline import DbChunkSource, RagPipeline
 from bfs_reg_copilot.retrieve.retrievers import DenseRetriever
 from bfs_reg_copilot.store.db import Conn
+from bfs_reg_copilot.store.loader import corpus_fingerprint
 
 DEFAULT_GENERATOR = "qwen2.5:7b"
 
 
 def build_baseline(conn: Conn, model: str = DEFAULT_GENERATOR, k: int = 5) -> RagPipeline:
-    retriever = DenseRetriever(conn, OllamaEmbedder(BGE_M3))
-    return RagPipeline(retriever, DbChunkSource(conn), OllamaGateway(model), k)
+    embedder = OllamaEmbedder(BGE_M3)
+    retriever = DenseRetriever(conn, embedder)
+    # Recorded with every run so a re-pulled model or a re-loaded corpus cannot go unnoticed.
+    provenance = {
+        "embedding_model": BGE_M3.name,
+        "embedding_model_digest": embedder.model_digest(),
+        "corpus_fingerprint": corpus_fingerprint(conn),
+    }
+    return RagPipeline(retriever, DbChunkSource(conn), OllamaGateway(model), k, provenance)

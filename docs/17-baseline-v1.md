@@ -65,3 +65,44 @@ labelled gold v2 and re-baseline.
 Improvement ideas (more context per question, a reranker, smaller chunks, query rewriting, tuned
 hybrid retrieval, M6 faithfulness) belong to Phase 3. Each is judged on dev against this record
 with its decision rule written before the run.
+
+## Rescored under gold v2 (2026-11-25)
+
+Decision D-2 of the [Gate 3 review](20-gate-3-phase-2-review.md). **Same run, same answers.** Only
+the grading rubric of two items changed, in `eval/gold/gold-v2.yaml`. Gold v1 is kept unedited and
+the v1 result above stays as recorded. Manifest and grades: `eval/baselines/baseline-v2-dev.*`.
+
+| Item | What v1 required | What v2 requires | Why |
+|---|---|---|---|
+| G-E23-001 (when does E-23 take effect) | The effective date and the publication date | The effective date | The question does not ask when it was published |
+| G-B10-002 (the two forms of concentration risk) | Both definitions | Both forms named | The question asks for the two names |
+
+| | Gold v1 | Gold v2 |
+|---|---|---|
+| M1 cited-answer accuracy | 22 of 32 = 69% (51% to 82%) | **24 of 32 = 75% (58% to 87%)** |
+| M2, M4, M5, M8 | unchanged | unchanged |
+
+**This was done after seeing the answers**, which is the risk the gold-set rules warn about. The
+corrections are limited to the two cases where a key point asked for something the question did
+not, and both answers gave exactly what was asked.
+
+### Rubrics that look strict but were not changed
+
+A read-through of all 32 dev rubrics for the same pattern found four more that an owner could
+reasonably call over-demanding. They were **not** changed, because loosening rubrics one by one
+after seeing which answers failed is how a score gets flattered. They are recorded here so the
+strictness is visible:
+
+| Item | Strict point | Baseline answer |
+|---|---|---|
+| G-B10-001 | Examples of third parties (at least three) when the question asks what counts and what is excluded | Definition and both exclusions, no examples |
+| G-E21-001 | "Tolerances are typically greater than risk appetite" when the question asks for the difference | Both definitions, no relationship |
+| G-CPR-004 | Three of four points, when the question asks two things (how often, and to whom) | Both asked things answered |
+| G-B13-001 | Example roles (head of IT, CISO) alongside senior-management accountability | Senior management assigns to senior officers; no roles |
+
+Sensitivity only, not a result: relaxing the first three would give M1 27 of 32 (68% to 93%);
+adding G-B13-001, 28 of 32. The strict standard is defensible, since these are list questions where
+the source's full list is the expected answer, and it affects every later version equally. The
+read-through was done by the drafter, not an independent reviewer, and found no rubric that is too
+lenient. Any of the four can still be changed by the owner, in a new gold version before the first
+Phase 3 run.

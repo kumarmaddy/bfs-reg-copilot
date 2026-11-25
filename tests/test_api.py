@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from bfs_reg_copilot.api.__main__ import is_loopback, main
+from bfs_reg_copilot.api.__main__ import EXIT_REFUSED, is_loopback, main
 from bfs_reg_copilot.api.app import create_app
 from bfs_reg_copilot.api.backend import DbProvenanceSource
 from bfs_reg_copilot.api.schemas import MAX_QUESTION_CHARS, Citation
@@ -247,7 +247,7 @@ def test_logs_never_contain_the_question(caplog: pytest.LogCaptureFixture) -> No
 def test_the_server_refuses_a_non_local_address_by_default(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    assert main(["--host", "0.0.0.0"])  # noqa: S104 == EXIT_REFUSED
+    assert main(["--host", "0.0.0.0"]) == EXIT_REFUSED  # noqa: S104
     assert "no authentication" in capsys.readouterr().out
 
 

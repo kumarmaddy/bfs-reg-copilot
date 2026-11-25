@@ -3,10 +3,11 @@
 Review of Phase 2 against the exit criteria in `06-delivery-plan.md`. Tick an item only when the
 evidence exists. "Owner" items cannot be done by the assistant.
 
-**Result: pending the owner's decisions D-1 to D-4 below.** Reviewed 2026-11-25. The assistant's
-recommendation is a **conditional go**: both exit criteria are met and evidenced, and nothing
-found blocks Phase 3, but D-1 (hold-out timing) and D-2 (gold v2) should be settled before the
-first Phase 3 run, because they decide how every later result is compared.
+**Result: conditional go.** Reviewed 2026-11-25. On the same day the owner accepted the
+recommendations on D-1, D-2 and D-3 below. Both exit criteria are met and evidenced, and nothing
+found blocks Phase 3. Phase 3 may start once the four conditions under "Conditions for starting
+Phase 3" are met. C-1 to C-3 were met on 2026-11-25. C-4 (slice 3.0) remains and must be done
+before the first Phase 3 run.
 
 ## Exit criteria
 
@@ -16,7 +17,7 @@ first Phase 3 run, because they decide how every later result is compared.
 | G3-2 | A small evaluation subset runs in CI | Nine-question subset (3 per kind) with each of five test doubles, `eval validate`, and one command-line run, in CI ([doc 19](19-ci-evaluation.md)). **This checks the measuring instrument, not answer quality** | [x] |
 | G3-3 | An answer with citations works end to end | API smoke test on the owner's machine, 2026-11-25: the E-23 effective-date question returned the right answer with a verified citation (URL, retrieval time, page-version hash) in 15 s. Failure path checked: with Ollama stopped the API returned `503 dependency_unavailable` and recovered without a restart | [x] |
 | G3-4 | Gold set of at least 60 questions | 60 items: 40 answerable, 15 refusal, 5 adversarial; 48 dev and 12 hold-out ([doc 12](12-gold-set.md)) | [x] |
-| G3-5 | **Owner:** the hold-out has not been run | The harness refuses a hold-out run without a flag and a reason and logs each one in `eval/holdout-log.jsonl`. The assistant has not seen that file. Check: `Test-Path eval\holdout-log.jsonl`. Expected: `False`, or no entries | [ ] |
+| G3-5 | **Owner:** the hold-out has not been run | The harness refuses a hold-out run without a flag and a reason and logs each one in `eval/holdout-log.jsonl`. The assistant has not seen that file. Check: `Test-Path eval\holdout-log.jsonl`. Owner check 2026-11-25: `Test-Path eval\holdout-log.jsonl` returned `False`, so no hold-out run has been logged | [x] |
 | G3-6 | No corpus text in git | Recorded grades hold ids, point numbers and short notes only. DQ-15 still fails if a file outside `data/sources/` is tracked | [x] |
 
 Checks of the code at the time of review: 361 tests passed and 1 skipped (Airflow is not
@@ -88,12 +89,12 @@ conditions.
 
 ## Decisions for the owner
 
-| # | Decision | Recommendation |
-|---|---|---|
-| D-1 | **When is the hold-out first run?** Doc 02 says it is sealed "until Gate 3" and doc 06 puts the M1 and M2 hold-out target in Phase 3, whose gate is 4 | Do **not** run it now. The baseline is untuned and was never expected to meet the targets; the hold-out has only 12 items, and each use spends its value. Run it once, at Gate 4, against the Phase 3 release candidate. Record the change in doc 02 section 6 with a dated note (proposed wording below) and correct "Hold-out at Gate 3" in the M1 row |
-| D-2 | **Gold v2:** fix the two rubric defects (G-E23-001, G-B10-002) and consider more items | Do it **once, before any Phase 3 run**, so that every comparison uses one rubric. Re-score the stored baseline answers under v2 (the answers do not change; only two grading decisions do) and record that as baseline v2, keeping the v1 files. Dev has only 32 answerable questions: see the sample-size point below |
-| D-3 | **Go or no-go for Phase 3** | Conditional go, once D-1 and D-2 are settled and the run-metadata fix (embedding digest, corpus hash) is made |
-| D-4 | **Peer review.** Risk R-17 says to request a peer review at Gates 3 and 5 | Ask one person to read docs 17 and 20 and the flagged grades, or record here that none is available |
+| # | Decision | Recommendation | Owner decision (2026-11-25) |
+|---|---|---|---|
+| D-1 | **When is the hold-out first run?** Doc 02 says it is sealed "until Gate 3" and doc 06 puts the M1 and M2 hold-out target in Phase 3, whose gate is 4 | Do **not** run it now. The baseline is untuned and was never expected to meet the targets; the hold-out has only 12 items, and each use spends its value. Run it once, at Gate 4, against the Phase 3 release candidate. Record the change in doc 02 section 6 with a dated note (wording below) and correct "Hold-out at Gate 3" in the M1 row and the split rule | **Accepted.** The doc 02 edit is still to be made |
+| D-2 | **Gold v2:** fix the two rubric defects (G-E23-001, G-B10-002) and consider more items | Do it **once, before any Phase 3 run**, so that every comparison uses one rubric. Re-score the stored baseline answers under v2 (the answers do not change; only two grading decisions do) and record that as baseline v2, keeping the v1 files. Dev has only 32 answerable questions: see the sample-size point below | **Accepted.** Done in slice 3.0 |
+| D-3 | **Go or no-go for Phase 3** | Conditional go, once D-1 and D-2 are settled and the run-metadata fix (embedding digest, corpus hash) is made | **Accepted:** conditional go |
+| D-4 | **Peer review.** Risk R-17 says to request a peer review at Gates 3 and 5 | Ask one person to read docs 17 and 20 and the flagged grades, or record here that none is available | **Recorded: none available (2026-11-25).** Single-owner project; the accepted limitation in R-17 stands, and R-17 asks again at Gate 5 |
 
 Proposed doc 02 section 6 line for D-1:
 `| 2026-11-25 | The hold-out is first run at Gate 4 (end of Phase 3), once per release candidate, not at Gate 3 | Baseline is untuned and not expected to meet targets; doc 06 already places the hold-out target in Phase 3 | Project owner |`
@@ -134,7 +135,16 @@ Report the flips by question, not only the totals. If (a) is met but the gain is
 it as "promising, not proven" and re-test on the enlarged v2 dev set. The context window (8,192
 tokens) limits how far k can go; the gateway refuses prompts that do not fit.
 
+## Conditions for starting Phase 3
+
+| # | Condition | State |
+|---|---|---|
+| C-1 | G3-5: the owner confirms the hold-out has not been run (`Test-Path eval\holdout-log.jsonl` gives `False`, or the file has no entries) | [x] 2026-11-25: `False` |
+| C-2 | D-4: the peer-review outcome is written into the table above | [x] 2026-11-25: none available |
+| C-3 | D-1: doc 02 is edited (change-log line, the M1 row and the split rule now say Gate 4) | [x] 2026-11-25 |
+| C-4 | Slice 3.0 is done before the first Phase 3 run: gold v2, embedding digest and corpus hash in run metadata, and a private backup of `eval/runs/` | [ ] |
+
 ## Next
 
-Phase 3 may start when the owner has decided D-1 to D-4, this review's PR is merged, and the
-`phase-2-complete` tag exists.
+Merge this review, then slice 3.0. When C-1 to C-3 are ticked and this document is merged, create
+the `phase-2-complete` tag. Slices 3.1 onward run only after C-4.

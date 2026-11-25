@@ -239,3 +239,19 @@ def test_db_chunk_source_keeps_order_and_skips_missing(migrated: Conn, tmp_path:
     assert got[0].section_path == ("Test page", "Scope")
     assert got[0].text == "Text 3."
     assert DbChunkSource(migrated).fetch([]) == []
+
+
+def test_describe_includes_the_provenance_it_was_given() -> None:
+    gateway = ScriptedGateway()
+    retriever = FixedRetriever([c.chunk_id for c in CHUNKS])
+    p = RagPipeline(
+        retriever,
+        MemorySource(),
+        gateway,
+        5,
+        {"embedding_model_digest": "abc123def456", "corpus_fingerprint": "624:0123456789ab"},
+    )
+    info = p.describe()
+    assert info["embedding_model_digest"] == "abc123def456"
+    assert info["corpus_fingerprint"] == "624:0123456789ab"
+    assert info["k"] == "5"  # the existing settings are still there

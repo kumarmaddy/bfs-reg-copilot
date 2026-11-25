@@ -23,6 +23,7 @@ would make us revisit it. Format: a short adaptation of MADR. Template: [0000](0
 | [0016](0016-embedding-model-bge-m3.md) | bge-m3 as the embedding model, chosen on dev-split hit@5 | Accepted |
 | [0017](0017-dense-only-retrieval-baseline.md) | Dense-only retrieval is the baseline; hybrid is built but off | Accepted |
 | [0018](0018-model-gateway-and-baseline-generator.md) | One model gateway, structured answers, and a baseline generator | Accepted |
+| [0019](0019-baseline-api.md) | Baseline API: small, local-only, one request at a time | Accepted |
 
 "Accepted" here means accepted by the project owner at Gate 0 on 2026-11-08. Evidence quoted from
 news articles, job postings and aggregator sites is indicative, not authoritative.

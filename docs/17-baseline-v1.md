@@ -104,5 +104,17 @@ Sensitivity only, not a result: relaxing the first three would give M1 27 of 32 
 adding G-B13-001, 28 of 32. The strict standard is defensible, since these are list questions where
 the source's full list is the expected answer, and it affects every later version equally. The
 read-through was done by the drafter, not an independent reviewer, and found no rubric that is too
-lenient. Any of the four can still be changed by the owner, in a new gold version before the first
-Phase 3 run.
+lenient.
+
+**Owner decision (2026-11-25): keep all four as they are, and revisit at the end of Phase 3.** The
+conditions for that revisit are set now so they cannot depend on the Phase 3 results:
+
+1. Any change is a new labelled gold version (v3), never an edit of v1 or v2.
+2. Every Phase 3 result is reported under v2, and under v3 as well if v3 exists, with both numbers
+   shown, so a reader can see what the rubric change contributed.
+3. Whether to adopt v3 is decided by one question: does the rubric ask for more than the question
+   does? It is not decided by which version makes a Phase 3 change look better.
+4. Re-scoring every earlier run under v3 needs that run's answers. Each run folder
+   (`eval/runs/`, not in git) must be backed up privately.
+
+None of the four items is in the hold-out.

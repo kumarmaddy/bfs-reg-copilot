@@ -336,3 +336,11 @@ def test_score_fails_loudly_when_an_explicit_grades_file_is_missing(tmp_path: Pa
     (run_dir,) = runs.iterdir()
     missing = tmp_path / "typo.csv"
     assert main([*base, "score", str(run_dir), "--grades", str(missing)]) == EXIT_UNREADABLE
+
+
+def test_over_refusal_counts_answerable_questions_that_were_refused(gold: GoldSet) -> None:
+    refuse_all = _report(gold, "refuse")
+    assert refuse_all.over_refusal.passed == refuse_all.over_refusal.total > 0
+    oracle = _report(gold, "oracle")
+    assert oracle.over_refusal.passed == 0
+    assert oracle.over_refusal.total == refuse_all.over_refusal.total

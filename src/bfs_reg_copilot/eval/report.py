@@ -54,6 +54,8 @@ class Report:
     latency_p50: float
     latency_p95: float
     by_source: dict[str, tuple[Rate, Rate]]  # source -> (M1 over graded, M4)
+    # Answerable questions the system refused. Lower is better; it is the cost side of M2.
+    over_refusal: Rate = Rate(0, 0)
 
 
 def build_report(gold: GoldSet, meta: RunMeta, records: list[RunRecord], grades: Grades) -> Report:
@@ -61,6 +63,7 @@ def build_report(gold: GoldSet, meta: RunMeta, records: list[RunRecord], grades:
     m1_pass = m1_total = ungraded = 0
     m2_pass = m2_total = 0
     m4_pass = m4_total = 0
+    over_refused = answerable_total = 0
     adv_pass = adv_total = adv_pending = 0
     citations = fabricated = errors = 0
     per_source: dict[str, list[int]] = defaultdict(lambda: [0, 0, 0, 0])  # m1 p, m1 n, m4 p, m4 n
@@ -77,6 +80,8 @@ def build_report(gold: GoldSet, meta: RunMeta, records: list[RunRecord], grades:
             hit = answer is not None and hit_at_k(item, answer)
             m4_total += 1
             m4_pass += hit
+            answerable_total += 1
+            over_refused += answer is not None and answer.refused
             row[2] += hit
             row[3] += 1
             if answer is None or answer.refused or not cites_support(item, answer):
@@ -118,6 +123,7 @@ def build_report(gold: GoldSet, meta: RunMeta, records: list[RunRecord], grades:
         latency_p50=percentile(latencies, 0.50),
         latency_p95=percentile(latencies, 0.95),
         by_source={s: (Rate(v[0], v[1]), Rate(v[2], v[3])) for s, v in sorted(per_source.items())},
+        over_refusal=Rate(over_refused, answerable_total),
     )
 
 
@@ -133,6 +139,9 @@ def render_report(report: Report) -> list[str]:
             f"   {report.m1_ungraded} answers still need a person; M1 covers graded ones only"
         )
     lines.append(f"M2 correct refusal         {report.m2.text()}")
+    lines.append(
+        f"   over-refusal (answerable but refused; lower is better)  {report.over_refusal.text()}"
+    )
     lines.append(f"M4 retrieval hit@5         {report.m4.text()}")
     rate = f"{report.fabricated / report.citations:.1%}" if report.citations else "n/a"
     lines.append(f"M5 fabricated citations    {report.fabricated}/{report.citations} = {rate}")

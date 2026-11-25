@@ -38,7 +38,7 @@ from bfs_reg_copilot.eval.runner import (
     run_eval,
     write_run,
 )
-from bfs_reg_copilot.eval.types import Pipeline
+from bfs_reg_copilot.eval.types import Pipeline, RunRecord
 from bfs_reg_copilot.rag.factory import DEFAULT_GENERATOR
 
 EXIT_OK = 0
@@ -115,6 +115,18 @@ def _build_parser() -> argparse.ArgumentParser:
     flips.add_argument("--max-broken", type=int, default=defaults.max_broken)
     flips.add_argument("--max-refusal-rise", type=int, default=defaults.max_refusal_rise)
     flips.add_argument("--max-p95", type=float, default=defaults.max_p95_s)
+    context = sub.add_parser(
+        "context",
+        help="show the text the model received for failing questions and which key points it holds",
+    )
+    context.add_argument("run_dir", type=Path)
+    context.add_argument("--grades", type=Path, default=None, help="default: <run_dir>/grades.csv")
+    context.add_argument(
+        "--items", default="", help="comma-separated item ids (default: every question that failed)"
+    )
+    context.add_argument(
+        "--out", type=Path, default=None, help="default: <run_dir>/context-report.md"
+    )
     score = sub.add_parser("score", help="print M1, M2, M4, M5 and M8 for a stored run")
     score.add_argument("run_dir", type=Path)
     score.add_argument("--grades", type=Path, default=None, help="default: <run_dir>/grades.csv")
@@ -189,6 +201,42 @@ def _run_baseline(gold: GoldSet, args: argparse.Namespace, split: Split) -> int:
         return code
 
 
+def _context(gold: GoldSet, args: argparse.Namespace, records: list[RunRecord]) -> int:
+    from contextlib import closing
+
+    from pg8000.exceptions import DatabaseError, InterfaceError
+
+    from bfs_reg_copilot.eval.context import failing_items, needed_chunk_ids
+    from bfs_reg_copilot.eval.context import render_report as render_context
+    from bfs_reg_copilot.rag.pipeline import DbChunkSource
+    from bfs_reg_copilot.store.db import connect, database_url, describe
+
+    grades_path = args.grades or args.run_dir / "grades.csv"
+    if not grades_path.exists():
+        raise GradingError(f"grades file not found: {grades_path}")
+    grades = read_grades(grades_path, gold)
+    wanted = [i.strip() for i in args.items.split(",") if i.strip()]
+    item_ids = wanted or failing_items(gold, records, grades)
+    known = {r.item_id for r in records}
+    unknown = [i for i in item_ids if i not in known]
+    if unknown:
+        raise GradingError(f"not in this run: {', '.join(unknown)}")
+    try:
+        conn = connect()
+    except (OSError, InterfaceError, DatabaseError) as exc:
+        print(f"ERROR cannot connect to {describe(database_url())}: {type(exc).__name__}: {exc}")
+        return EXIT_UNREADABLE
+    with closing(conn):
+        chunk_ids = needed_chunk_ids(gold, records, item_ids)
+        texts = {c.chunk_id: c.text for c in DbChunkSource(conn).fetch(chunk_ids)}
+    report, summary = render_context(gold, records, grades, item_ids, texts)
+    out = args.out or args.run_dir / "context-report.md"
+    out.write_text("\n".join(report) + "\n", encoding="utf-8")
+    print("\n".join(summary))
+    print(f"wrote {len(summary)} questions to {out} (corpus text: keep it out of git)")
+    return EXIT_OK
+
+
 def _flips(gold: GoldSet, args: argparse.Namespace) -> int:
     runs = []
     for folder, grades_path in ((args.before, args.grades_before), (args.after, args.grades_after)):
@@ -257,6 +305,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.command == "flips":
             return _flips(gold, args)
         meta, records = read_run(args.run_dir)
+        if args.command == "context":
+            return _context(gold, args, records)
         if args.command == "grade-sheet":
             out = args.out or args.run_dir / "grades.csv"
             count = write_grading_sheet(out, gold, records)

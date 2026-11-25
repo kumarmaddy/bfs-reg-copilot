@@ -81,6 +81,23 @@ questions needs. "Promising, not proven" means the rule is met with a smaller ga
 re-test on a larger dev set before relying on it. "Do not adopt" means a condition failed; record
 the result anyway. A result that did not help is still a result.
 
+## Serving settings (Ollama)
+
+Latency and, for a larger model, run time depend on how Ollama is set up, so it is part of the experiment.
+
+- `OLLAMA_MAX_LOADED_MODELS=2`. A run uses two models (the embedder and the generator). With the limit at 1
+  they evict each other on every question and each question pays a reload. Keep-alive can stay at the
+  default of 5 minutes: questions arrive every few seconds, so the models stay loaded during a run.
+- The variables are read when the server starts. Setting them with `[Environment]::SetEnvironmentVariable(
+  name, value, "User")` does not change the window you ran it in, and a server started from that window
+  (for example by `ollama stop` or `ollama ps` when none is running) inherits the old values. Quit Ollama
+  from the tray, start it from the Start menu, then check the first line of
+  `%LOCALAPPDATA%\Ollama\server.log` ("server config") for the values.
+- Record `ollama --version` with each experiment, and do not update Ollama in the middle of a series.
+  After any change of version or serving settings, re-run the reference and carry the grades over: it must
+  report 0 still to grade, otherwise the answers changed and the reference is a new one.
+- Latency is comparable only between runs under the same serving settings.
+
 ## Rules for the person running it
 
 - Do not look at the changed answers and then adjust the rule. If the rule was wrong, say so, write

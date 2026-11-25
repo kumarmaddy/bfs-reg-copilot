@@ -135,6 +135,79 @@ Report the flips by question, not only the totals. If (a) is met but the gain is
 it as "promising, not proven" and re-test on the enlarged v2 dev set. The context window (8,192
 tokens) limits how far k can go; the gateway refuses prompts that do not fit.
 
+## Experiment 3.1 result (k = 8 against k = 5)
+
+Run 2026-11-25 on the 47 dev items, gold v2, commit c1e27cb, same model (qwen2.5:7b, digest
+845dbda0ea48), embedder (bge-m3, digest 790764642607), corpus (fingerprint 624:8a54e9fe360a) and
+settings. The only difference is `k`. The rule written above was not changed after the run.
+The reference run (k = 5) reproduced the first baseline exactly: all 33 grades carried, same
+prompt-token total, so M10 holds.
+
+| Measure | k = 5 (reference) | k = 8 |
+|---|---|---|
+| M1 cited-answer accuracy | 24/32 = 75% | 25/32 = 78% (95% CI 61% to 89%) |
+| M2 correct refusal | 12/12 | 12/12 |
+| Over-refusal of answerable questions | 1/32 | 1/32 |
+| M4 hit@5 | 30/32 | 30/32 |
+| M4 measured over all 8 passages | 30/32 | 31/32 |
+| M5 fabricated citations | 0/46 | 0/51 |
+| Latency p50 / p95 | 16.1 s / 21.0 s | 20.0 s / 26.2 s |
+| Prompt tokens (47 calls) | 67,121 | 100,207 |
+| Model time | 673 s | 858 s |
+
+| Rule condition | Result |
+|---|---|
+| (a) at least 4 fixed and at most 1 broken | **Fail**: 2 fixed (G-CPR-004, G-STR-001), 1 broken (G-RBA-003) |
+| (b) M5 stays 0 | Pass |
+| (c) over-refusal rises by at most 1 | Pass (1 to 1) |
+| (d) p95 at most 32 s | Pass (26.2 s) |
+
+**Verdict: do not adopt k = 8.** Net gain is +1 question, below the four-fixed floor and the
+roughly six needed to show an effect on 32 questions. Of the eight questions failing at k = 5, six
+still fail: three have unchanged answers (G-B10-001, G-B13-001, G-E21-001) and three changed but
+still fail (G-E21-005, G-RBA-002, G-STR-003). So the verdict does not depend on the borderline
+grading calls listed below.
+
+**What it shows.**
+- More context did not fix incomplete answers. The 7B model summarises instead of listing every
+  required item, with the passages already in front of it. This points at the prompt or the model,
+  not at retrieval depth.
+- The two real fixes: G-CPR-004 now gives the review report and its 30-day limit, and G-STR-001
+  now gives the three thresholds the right way round (swapped at k = 5).
+- The one break (G-RBA-003) is a borderline grade, see below.
+- Retrieval: the "hit@5" line cannot move with `k`, so it hides the effect. Over all 8 passages,
+  G-E21-005 is now retrieved (ranks 6 to 8) but its answer still fails; G-STR-003 is still missed.
+- Cost of the extra context: 49% more prompt tokens, p50 +4 s, p95 +5 s.
+
+**Grading caveat.** The 19 changed answers were first graded by Claude (draft) against the v2
+rubrics and reviewed by the owner [owner to confirm or edit this line]. Borderline calls: G-RBA-003
+(definition given, but omits the regulatory, reputational, legal and financial considerations;
+not credited, which counts as broken), G-STR-004 (omits "with an explanation of the change";
+credited), G-B13-003 (adds "background checks", not among the key points; source not yet checked),
+G-E21-005 (marked as contradicting because it says E-21 is read with E-21). Crediting G-RBA-003
+makes broken 0 and fixed 2: the rule still fails on (a). The graders knew which run was which,
+which is a risk of bias. Reported as it is.
+
+**Recorded, not tried.** Retrieval depth between 5 and 8 passages, and a larger k with a
+reranker, were not tested. This result covers k = 8 on this model and this prompt only.
+
+### Proposed order after 3.1 (for the owner to approve)
+
+The failure analysis and this result both say the main loss is incomplete answers, which retrieval
+changes cannot fix. Retrieval steps can move M1 by at most the two retrieval misses (one now).
+Proposal, with the rule for each written before its run:
+
+| Step | What | Why |
+|---|---|---|
+| 3.2 | **Answer-completeness prompt (v2)**: tell the model to cover every part of the question and list every item the passages give, at k = 5 | Targets the six incomplete answers directly; one change, no extra latency cost |
+| 3.3 | **Larger model** (qwen2.5:14b) with the best prompt, if 3.2 leaves M1 short | Tests whether the 7B limit is the cause; latency is the risk (the rule must state a p95 limit) |
+| 3.4 | Tune hybrid retrieval and reranker, only if retrieval misses matter after 3.2 and 3.3 | At most one question left to gain |
+| 3.5 | Guardrails: block `uncited` answers, refusal floor, prompt-injection scanning (I-5) | Closes M8 coverage and the baseline's known gaps |
+| 3.6 | Faithfulness (M6) with a checked judge model | Without it, unsupported additions go uncounted |
+| 3.7 | Optional: fine-tuning; eCFR source pack | Only if the targets are still missed |
+
+This changes the order in the table above, so it needs the owner's decision before 3.2 runs.
+
 ## Conditions for starting Phase 3
 
 | # | Condition | State |

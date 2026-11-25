@@ -68,6 +68,14 @@ most 1, and p95 latency at most 32 s. Those are the defaults, written for 3.1; o
 (`--min-fixed`, `--max-broken`, `--max-refusal-rise`, `--max-p95`) set a different rule for a
 different experiment, which must also be written down first.
 
+A change of model uses `--model` and keeps the prompt and `k`. When an experiment's written rule does not gate on latency (as in 3.3), run `flips` with `--max-p95 1000` and report the latency from the `score` output in the record:
+
+```powershell
+uv run python -m bfs_reg_copilot.eval run --pipeline baseline --split dev --model qwen2.5:14b
+```
+
+Check a new model with a one-question smoke run first, written outside `eval\runs` so it is never mistaken for the latest run: `... --limit 1 --out-dir $env:TEMP\smoke`.
+
 **Reading the verdict.** "Adopt" needs a net gain of about six questions, the size a sign test on 32
 questions needs. "Promising, not proven" means the rule is met with a smaller gain: record it, and
 re-test on a larger dev set before relying on it. "Do not adopt" means a condition failed; record

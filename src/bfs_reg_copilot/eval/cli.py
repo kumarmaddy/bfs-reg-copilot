@@ -9,6 +9,7 @@ import argparse
 from collections.abc import Callable, Sequence
 from pathlib import Path
 
+from bfs_reg_copilot.eval.compare import CompareError, Rule, compare_runs, render
 from bfs_reg_copilot.eval.fakes import DOUBLES
 from bfs_reg_copilot.eval.gold import (
     GoldError,
@@ -22,6 +23,7 @@ from bfs_reg_copilot.eval.gold import (
 from bfs_reg_copilot.eval.grading import (
     Grades,
     GradingError,
+    carry_grades,
     read_grades,
     write_grading_sheet,
 )
@@ -86,6 +88,27 @@ def _build_parser() -> argparse.ArgumentParser:
     sheet = sub.add_parser("grade-sheet", help="write a CSV of answers for a person to grade")
     sheet.add_argument("run_dir", type=Path)
     sheet.add_argument("--out", type=Path, default=None, help="default: <run_dir>/grades.csv")
+    sheet.add_argument(
+        "--carry-from",
+        type=Path,
+        default=None,
+        help="an earlier run folder; with --carry-grades, copy grades of unchanged answers",
+    )
+    sheet.add_argument(
+        "--carry-grades", type=Path, default=None, help="the grades file of --carry-from"
+    )
+    flips = sub.add_parser(
+        "flips", help="compare two graded runs question by question against a decision rule"
+    )
+    flips.add_argument("before", type=Path, help="run folder of the earlier version")
+    flips.add_argument("after", type=Path, help="run folder of the changed version")
+    flips.add_argument("--grades-before", type=Path, required=True)
+    flips.add_argument("--grades-after", type=Path, required=True)
+    defaults = Rule()
+    flips.add_argument("--min-fixed", type=int, default=defaults.min_fixed)
+    flips.add_argument("--max-broken", type=int, default=defaults.max_broken)
+    flips.add_argument("--max-refusal-rise", type=int, default=defaults.max_refusal_rise)
+    flips.add_argument("--max-p95", type=float, default=defaults.max_p95_s)
     score = sub.add_parser("score", help="print M1, M2, M4, M5 and M8 for a stored run")
     score.add_argument("run_dir", type=Path)
     score.add_argument("--grades", type=Path, default=None, help="default: <run_dir>/grades.csv")
@@ -160,6 +183,28 @@ def _run_baseline(gold: GoldSet, args: argparse.Namespace, split: Split) -> int:
         return code
 
 
+def _flips(gold: GoldSet, args: argparse.Namespace) -> int:
+    runs = []
+    for folder, grades_path in ((args.before, args.grades_before), (args.after, args.grades_after)):
+        if not grades_path.exists():
+            raise GradingError(f"grades file not found: {grades_path}")
+        meta, records = read_run(folder)
+        runs.append((meta, records, read_grades(grades_path, gold)))
+    rule = Rule(
+        min_fixed=args.min_fixed,
+        max_broken=args.max_broken,
+        max_refusal_rise=args.max_refusal_rise,
+        max_p95_s=args.max_p95,
+    )
+    try:
+        comparison = compare_runs(gold, runs[0], runs[1])
+    except CompareError as exc:
+        print(f"ERROR {exc}")
+        return EXIT_UNREADABLE
+    print("\n".join(render(comparison, rule)))
+    return EXIT_OK
+
+
 def _print_progress(done: int, total: int, item_id: str) -> None:
     print(f"  {done}/{total} {item_id}", flush=True)
 
@@ -203,11 +248,29 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _validate(gold, args.chunk_dir, args.require_chunks)
         if args.command == "run":
             return _run(gold, args)
+        if args.command == "flips":
+            return _flips(gold, args)
         meta, records = read_run(args.run_dir)
         if args.command == "grade-sheet":
             out = args.out or args.run_dir / "grades.csv"
             count = write_grading_sheet(out, gold, records)
             print(f"wrote {count} rows to {out}; fill points_hit / verdict, then run score")
+            if (args.carry_from is None) != (args.carry_grades is None):
+                raise GradingError("--carry-from and --carry-grades must be given together")
+            if args.carry_from is not None:
+                old_meta, old_records = read_run(args.carry_from)
+                if old_meta.gold_sha256 != meta.gold_sha256:
+                    print(
+                        "NOTE the earlier run was recorded under a different gold file. Carried "
+                        "grades are only as valid as the grades file: use the one that matches "
+                        "the gold file in use now."
+                    )
+                carried, todo = carry_grades(
+                    out, records, old_records, args.carry_grades, old_meta.run_id
+                )
+                print(
+                    f"carried {carried} grades from {old_meta.run_id}; {todo} still need a person"
+                )
             return EXIT_OK
         grades_path = args.grades or args.run_dir / "grades.csv"
         if args.grades is not None and not grades_path.exists():

@@ -13,7 +13,7 @@ from pathlib import Path
 
 from bfs_reg_copilot.eval.gold import AdversarialItem, AnswerableItem, GoldSet
 from bfs_reg_copilot.eval.metrics import cites_support, section_id
-from bfs_reg_copilot.eval.types import RunRecord
+from bfs_reg_copilot.eval.types import PipelineAnswer, RunRecord
 
 COLUMNS = (
     "item_id",
@@ -127,3 +127,43 @@ def read_grades(path: Path, gold: GoldSet) -> Grades:
                     raise GradingError(f"{item_id}: verdict must be pass or fail, got {verdict!r}")
                 verdicts[item_id] = verdict == "pass"
     return Grades(points=points, contradicts=frozenset(contradicts), verdicts=verdicts)
+
+
+def _same_answer(a: PipelineAnswer | None, b: PipelineAnswer | None) -> bool:
+    """Same text, citations and refusal flag. What was retrieved does not matter to a grade."""
+    if a is None or b is None:
+        return False
+    return (a.text, a.cited_chunks, a.refused) == (b.text, b.cited_chunks, b.refused)
+
+
+def carry_grades(
+    sheet: Path,
+    new_records: list[RunRecord],
+    old_records: list[RunRecord],
+    old_grades_csv: Path,
+    old_run_id: str,
+) -> tuple[int, int]:
+    """Fill a fresh grading sheet from an earlier run's grades, only where the answer is the same.
+    Returns (carried, still to grade). A grade is a judgement of one specific answer, so a changed
+    answer is left blank for a person."""
+    new_by_id = {r.item_id: r.answer for r in new_records}
+    old_by_id = {r.item_id: r.answer for r in old_records}
+    with old_grades_csv.open(encoding="utf-8-sig", newline="") as handle:
+        old_rows = {r["item_id"]: r for r in csv.DictReader(handle)}
+    with sheet.open(encoding="utf-8-sig", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    carried = 0
+    for row in rows:
+        item_id = row["item_id"]
+        old = old_rows.get(item_id)
+        if old is None or not _same_answer(new_by_id.get(item_id), old_by_id.get(item_id)):
+            continue
+        for column in ("points_hit", "contradicts", "verdict"):
+            row[column] = old.get(column, "")
+        row["note"] = f"carried from {old_run_id}: answer unchanged"
+        carried += 1
+    with sheet.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=COLUMNS)
+        writer.writeheader()
+        writer.writerows(rows)
+    return carried, len(rows) - carried

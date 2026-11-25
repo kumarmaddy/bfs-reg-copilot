@@ -29,7 +29,7 @@ values: **Draft** (written, not yet reviewed), **In review**, **Accepted**, **Su
 | 18 | [The API](18-api.md) | How to run the API, what it returns, and its limits | 3 | Draft |
 | 19 | [Evaluation in CI](19-ci-evaluation.md) | What the CI evaluation checks, and what it cannot | 3 | Draft |
 | 20 | [Gate 3: Phase 2 review](20-gate-3-phase-2-review.md) | Whether Phase 3 may start | 3 | Draft |
-
+| 21 | [Running an experiment](21-running-experiments.md) | How a Phase 3 change is tested and compared against the baseline | 4 | Draft |
 
 | ADR | [Architecture decision records](adr/README.md) | Why the stack is what it is, and what we rejected | 0 | Accepted |
 
@@ -54,3 +54,4 @@ recorded openly in [04-risk-register.md](04-risk-register.md) (risk R-17).
 - Regulatory content is paraphrased, never copied in bulk. Each claim names its source.
 - A statement that comes from a tool summary and not from a human reading of the primary text is
   marked **[to verify]** until the owner confirms it.
+| 21 | [Running an experiment](21-running-experiments.md) | How a Phase 3 change is tested and compared against the baseline | 4 | Draft |

@@ -303,6 +303,50 @@ G-RBA-004 (extra clause). None of these changes the verdict.
 says a v3 needs a new written rule and the owner's decision first; nothing in this result argues for
 spending it.
 
+### Pre-registered rule for 3.3 (larger model)
+
+Written 2026-11-25, after experiments 3.1 and 3.2 and **before any run with the larger model**.
+The owner chose on the same day to report latency and not gate on it.
+
+**The question.** Does a larger generator improve M1 on the same questions? Experiments 3.1 and 3.2
+suggest the 7B model's reading of the sources is the limit; this tests that.
+
+**The one change.** `--model qwen2.5:14b` in place of `qwen2.5:7b`, with prompt v1, `k = 5` and
+everything else unchanged (retriever, seed, temperature, token limit). Prompt v1 is used because v2
+was not adopted. The model's digest is recorded in the run's `meta.json`.
+
+**Reference.** Run `20261125T154349Z-baseline-dev` (qwen2.5:7b, prompt v1, k = 5, gold v2): M1 24/32,
+0 malformed outputs, M2 12/12, M8 3/3, over-refusal 1/32, p50 16.1 s, p95 21.0 s.
+
+**Latency is reported, not gated.** The owner decided on 2026-11-25 that this
+experiment answers "does a bigger model help M1?" and that latency becomes a separate decision in
+Phase 4. The 32 s limit of 3.1 and 3.2 is therefore **not** a condition here. `eval flips` is run
+with `--max-p95 1000` so its latency line does not gate, and the record reports p50, p95 and model
+time against the reference and against the M3 target (10 s p95). A 14b model on this laptop is
+expected to miss that target; that is recorded, not hidden. "Adopt" below means "carry the model
+forward as the answer-quality candidate for the Phase 4 latency and cost decision", not "make it the
+default".
+
+**Adopt the larger model only if** all of these hold on the same 32 dev questions:
+- (a) at least four questions move from fail to pass and at most one from pass to fail;
+- (b) M5 stays at 0;
+- (c) the refusal count on answerable questions does not rise by more than one;
+- (d) the run has no errors (a run with errors is repeated, not scored), and malformed outputs stay
+  at 0;
+- (e) M2 stays at 12/12 and M8 at 3/3.
+
+`eval flips` checks (a) to (c). Check (d) and (e) by hand in the `score` output. A net gain under six
+is "promising, not proven". If the rule is met, the next step is the Phase 4 latency decision, with
+the cost in seconds per answer stated. If it fails, the 7B model stays and the next experiments are
+retrieval (3.4) and guardrails (3.5).
+
+**Limits of the result.** Only this model size is tried. Dev has been looked at three times by now
+(3.1, 3.2, 3.3), so a pass is weaker evidence than it looks; the enlarged dev set and the Gate 4
+hold-out are where it is confirmed. No other model is tried on dev without a new written rule.
+
+**Grading.** Changed answers are graded against the v2 gold rubrics as before, by a grader who knows
+which run is which; the record says so.
+
 ## Conditions for starting Phase 3
 
 | # | Condition | State |

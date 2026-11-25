@@ -210,6 +210,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(f"wrote {count} rows to {out}; fill points_hit / verdict, then run score")
             return EXIT_OK
         grades_path = args.grades or args.run_dir / "grades.csv"
+        if args.grades is not None and not grades_path.exists():
+            # An explicit path that is missing must not silently score as "no grades".
+            raise GradingError(f"grades file not found: {grades_path}")
         grades = read_grades(grades_path, gold) if grades_path.exists() else Grades()
         print("\n".join(render_report(build_report(gold, meta, records, grades))))
         return EXIT_OK

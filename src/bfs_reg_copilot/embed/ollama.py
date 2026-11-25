@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import os
-from collections.abc import Sequence
+import time
+from collections.abc import Callable, Sequence
 from typing import Any, Final, Protocol
 
 import httpx
@@ -34,23 +35,46 @@ class OllamaEmbedder:
     is_test_double = False
 
     def __init__(
-        self, model: EmbeddingModel, host: str | None = None, client: httpx.Client | None = None
+        self,
+        model: EmbeddingModel,
+        host: str | None = None,
+        client: httpx.Client | None = None,
+        retries: int = 2,
+        sleep: Callable[[float], None] = time.sleep,
     ) -> None:
         self.model = model
+        self._retries = retries
+        self._sleep = sleep
         self._url = (host or ollama_host()).rstrip("/") + "/api/embed"
         self._client = client or httpx.Client(timeout=300.0)
+
+    def _post(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """POST with retries for transport errors and 5xx (Ollama drops connections when it
+        swaps models in and out of memory); other failures are not retried."""
+        last: Exception | None = None
+        for attempt in range(self._retries + 1):
+            if attempt:
+                self._sleep(2.0**attempt)
+            try:
+                response = self._client.post(self._url, json=payload)
+                response.raise_for_status()
+                body: dict[str, Any] = response.json()
+                return body
+            except httpx.TransportError as exc:
+                last = exc
+            except httpx.HTTPStatusError as exc:
+                last = exc
+                if exc.response.status_code < 500:
+                    break
+            except ValueError as exc:
+                last = exc
+                break
+        raise EmbedError(f"embedding request to {self._url} failed: {last}") from last
 
     def _embed(self, texts: Sequence[str]) -> list[list[float]]:
         if not texts:
             return []
-        try:
-            response = self._client.post(
-                self._url, json={"model": self.model.name, "input": list(texts), "truncate": False}
-            )
-            response.raise_for_status()
-            body: dict[str, Any] = response.json()
-        except (httpx.HTTPError, ValueError) as exc:
-            raise EmbedError(f"embedding request to {self._url} failed: {exc}") from exc
+        body = self._post({"model": self.model.name, "input": list(texts), "truncate": False})
         vectors = body.get("embeddings")
         if not isinstance(vectors, list) or len(vectors) != len(texts):
             raise EmbedError(

@@ -20,6 +20,8 @@ items that need an owner and a date.
 | I-4 | No independent reviewer assigned | Owner | Open (accepted limitation, R-17) |
 | I-5 | Prompt-injection content scanning on ingest deferred (R-06): cleaner drops hidden text, DQ-16 instruction patterns | Owner | Open, Phase 3 |
 | I-6 | `A-OSFI-B10` gave 71 chunks on Windows and 72 in the Codespace; compare manifests to see whether the page changed | Owner | Open |
+| I-7 | Baseline API has no authentication, TLS or rate limit; local only | Owner | Open (Phase 4) |
+| I-8 | Baseline p95 latency is 21.6 s on the laptop with a 7b model, against an M3 target of 10 s; the deployed target may need a smaller model or different hardware | Owner | Open (decide at Phase 4 start) |
 
 ## Dependencies
 

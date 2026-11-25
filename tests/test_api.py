@@ -72,7 +72,9 @@ class FakePipeline:
             raise self.ready_error
 
 
-def _answer(text: str = "An answer.", cited: Sequence[str] = (CHUNK_A,), refused: bool = False):
+def _answer(
+    text: str = "An answer.", cited: Sequence[str] = (CHUNK_A,), refused: bool = False
+) -> PipelineAnswer:
     return PipelineAnswer(
         text=text, refused=refused, cited_chunks=tuple(cited), retrieved_chunks=(CHUNK_A, CHUNK_B)
     )
@@ -95,7 +97,9 @@ class Harness:
         self.closes += 1
 
 
-def _harness(answer: PipelineAnswer | Exception, known: Sequence[str] = (CHUNK_A, CHUNK_B)):
+def _harness(
+    answer: PipelineAnswer | Exception, known: Sequence[str] = (CHUNK_A, CHUNK_B)
+) -> Harness:
     return Harness(FakePipeline(answer), known)
 
 

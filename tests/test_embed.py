@@ -127,6 +127,35 @@ def test_unreachable_server_is_an_embed_error() -> None:
         _mock(httpx.MockTransport(refuse)).embed_documents(["a"])
 
 
+def test_transient_disconnects_are_retried_then_succeed() -> None:
+    calls = {"n": 0}
+
+    def flaky(request: httpx.Request) -> httpx.Response:
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise httpx.RemoteProtocolError("Server disconnected without sending a response.")
+        return httpx.Response(200, json={"embeddings": [[0.0] * EMBEDDING_DIMS]})
+
+    client = httpx.Client(transport=httpx.MockTransport(flaky))
+    embedder = OllamaEmbedder(BGE_M3, host="http://x", client=client, sleep=lambda _s: None)
+    assert len(embedder.embed_documents(["a"])) == 1
+    assert calls["n"] == 3
+
+
+def test_client_errors_are_not_retried() -> None:
+    calls = {"n": 0}
+
+    def bad(request: httpx.Request) -> httpx.Response:
+        calls["n"] += 1
+        return httpx.Response(404, json={"error": "model not found"})
+
+    client = httpx.Client(transport=httpx.MockTransport(bad))
+    embedder = OllamaEmbedder(BGE_M3, host="http://x", client=client, sleep=lambda _s: None)
+    with pytest.raises(EmbedError):
+        embedder.embed_documents(["a"])
+    assert calls["n"] == 1
+
+
 def test_vector_literal_round_trips_precision() -> None:
     assert vector_literal([0.1, -2.0, 1e-9]) == "[0.1,-2,1e-09]"
 

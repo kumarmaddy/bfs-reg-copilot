@@ -327,3 +327,12 @@ def test_cli_holdout_runs_when_confirmed_and_is_logged(tmp_path: Path) -> None:
 
 def test_cli_reports_a_missing_run(tmp_path: Path) -> None:
     assert main(["--gold", str(GOLD_FILE), "score", str(tmp_path / "nope")]) == EXIT_UNREADABLE
+
+
+def test_score_fails_loudly_when_an_explicit_grades_file_is_missing(tmp_path: Path) -> None:
+    base = ["--gold", str(GOLD_FILE)]
+    runs = tmp_path / "runs"
+    assert main([*base, "run", "--pipeline", "oracle", "--out-dir", str(runs)]) == EXIT_OK
+    (run_dir,) = runs.iterdir()
+    missing = tmp_path / "typo.csv"
+    assert main([*base, "score", str(run_dir), "--grades", str(missing)]) == EXIT_UNREADABLE

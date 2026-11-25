@@ -8,8 +8,8 @@ judged against these numbers. The hold-out has not been touched.
 | Pipeline | dense top-5 (bge-m3, [ADR-0017](adr/0017-dense-only-retrieval-baseline.md)), prompt v1, `qwen2.5:7b` ([ADR-0018](adr/0018-model-gateway-and-baseline-generator.md)) |
 | Run | `20261125T100230Z-baseline-dev` (not committed) |
 | Code commit | `7d1b4f3158a3bacfc6f2d3da85cdbfffde304afa` |
-| Gold set | v1, `bb7ee80afbf6`, dev split: 32 answerable, 12 refusal, 3 adversarial |
-| Settings | temperature 0, seed 20261123, `num_ctx` 8192, k = 5. Model digest is in the run's metadata **[to verify against the run file before quoting]** |
+| Gold set | v1, `bb7ee80afbf6`, dev split: 32 answerable, 12 refusal, 3 adversarial scored (G-ADV-003 skipped: it needs a document fixture, RAID I-5) |
+| Settings | temperature 0, seed 20261123, `num_ctx` 8192, k = 5. max_answer_tokens 512. qwen2.5:7b digest 845dbda0ea48 (from the run metadata). The embedding model's digest is not recorded in the run |
 | Machine | ThinkPad P14s Gen 5, Intel Arc iGPU via Vulkan, 32 GB RAM, local Ollama |
 | Grades | [`eval/baselines/baseline-v1-dev.grades.csv`](../eval/baselines/README.md) |
 

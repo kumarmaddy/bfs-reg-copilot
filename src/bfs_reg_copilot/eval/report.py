@@ -58,6 +58,16 @@ class Report:
     over_refusal: Rate = Rate(0, 0)
 
 
+def m1_outcome(item: AnswerableItem, record: RunRecord, grades: Grades) -> bool | None:
+    """True/False once decided, None while a person still has to grade the answer."""
+    answer = record.answer
+    if answer is None or answer.refused or not cites_support(item, answer):
+        return False  # fails a mechanical rule, no person needed
+    if item.id in grades.points:
+        return item.id not in grades.contradicts and points_ok(item, grades.points[item.id])
+    return None
+
+
 def build_report(gold: GoldSet, meta: RunMeta, records: list[RunRecord], grades: Grades) -> Report:
     by_id = {i.id: i for i in gold.items}
     m1_pass = m1_total = ungraded = 0
@@ -84,14 +94,7 @@ def build_report(gold: GoldSet, meta: RunMeta, records: list[RunRecord], grades:
             over_refused += answer is not None and answer.refused
             row[2] += hit
             row[3] += 1
-            if answer is None or answer.refused or not cites_support(item, answer):
-                graded_ok: bool | None = False  # fails a mechanical rule, no person needed
-            elif item.id in grades.points:
-                graded_ok = item.id not in grades.contradicts and points_ok(
-                    item, grades.points[item.id]
-                )
-            else:
-                graded_ok = None
+            graded_ok = m1_outcome(item, record, grades)
             if graded_ok is None:
                 ungraded += 1
             else:

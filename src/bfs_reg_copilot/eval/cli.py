@@ -78,6 +78,12 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     run.add_argument("--model", default=DEFAULT_GENERATOR, help="generator for `baseline`")
     run.add_argument("--k", type=int, default=5, help="chunks given to the generator")
+    run.add_argument(
+        "--prompt-version",
+        default="v1",
+        choices=["v1", "v2"],
+        help="system prompt for `baseline` (v1 is the measured baseline)",
+    )
     run.add_argument("--split", choices=[s.value for s in Split], default=Split.DEV.value)
     run.add_argument("--limit", type=int, default=None, help="at most N items per kind (smoke)")
     run.add_argument("--out-dir", type=Path, default=DEFAULT_RUNS_DIR, help="where runs are stored")
@@ -168,7 +174,7 @@ def _run_baseline(gold: GoldSet, args: argparse.Namespace, split: Split) -> int:
             print(f"ERROR the database has {have}/{total} chunks embedded with bge-m3")
             return EXIT_UNREADABLE
         try:
-            pipeline = build_baseline(conn, args.model, args.k)
+            pipeline = build_baseline(conn, args.model, args.k, args.prompt_version)
             pipeline.check_ready()
         except GatewayError as exc:
             print(f"ERROR {exc}")

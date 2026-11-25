@@ -180,7 +180,7 @@ grading calls listed below.
 - Cost of the extra context: 49% more prompt tokens, p50 +4 s, p95 +5 s.
 
 **Grading caveat.** The 19 changed answers were first graded by Claude (draft) against the v2
-rubrics and reviewed by the owner [owner to confirm or edit this line]. Borderline calls: G-RBA-003
+rubrics; the owner adopted these drafts as the grades of record without re-grading each row, and the borderline calls below have not been checked against the source text. Borderline calls: G-RBA-003
 (definition given, but omits the regulatory, reputational, legal and financial considerations;
 not credited, which counts as broken), G-STR-004 (omits "with an explanation of the change";
 credited), G-B13-003 (adds "background checks", not among the key points; source not yet checked),
@@ -249,6 +249,59 @@ owner's decision first.
 
 **Grading.** The changed answers are graded against the v2 gold rubrics as in 3.1. The grader knows
 which run is which; the record says so.
+
+## Experiment 3.2 result (prompt v2 against v1, k = 5)
+
+Run 2026-11-25 on the 47 dev items, gold v2, commit eddf9e1, same model, embedder and corpus as the
+reference. The only difference is `--prompt-version v2`. The rule above was not changed after the
+run. The reference is run `20261125T154349Z-baseline-dev` (prompt v1).
+
+| Measure | v1 (reference) | v2 |
+|---|---|---|
+| M1 cited-answer accuracy | 24/32 = 75% | 23/32 = 72% (95% CI 55% to 84%) |
+| M2 correct refusal | 12/12 | 12/12 |
+| Over-refusal of answerable questions | 1/32 | 1/32 |
+| M4 hit@5 | 30/32 | 30/32 |
+| M5 fabricated citations | 0/46 | 0/43 |
+| M8 adversarial | 3/3 | 3/3 (graded from the draft) |
+| Malformed outputs | 0 | 0 |
+| Latency p50 / p95 | 16.1 s / 21.0 s | 16.5 s / 27.0 s |
+| Prompt / completion tokens (47 calls) | 67,121 / 3,229 | 70,975 / 3,701 |
+| Model time | 673 s | 729 s |
+
+| Rule condition | Result |
+|---|---|
+| (a) at least 4 fixed and at most 1 broken | **Fail**: 0 fixed, 1 broken (G-RBA-003) |
+| (b) M5 stays 0 | Pass |
+| (c) over-refusal rises by at most 1 | Pass (1 to 1) |
+| (d) p95 at most 32 s | Pass (27.0 s) |
+| (e) malformed outputs stay 0 | Pass |
+| (f) M2 12/12 and M8 3/3 | Pass |
+
+**Verdict: do not adopt prompt v2.** The six questions that fail at k = 5 and were meant to
+improve still fail, except that G-STR-003 and G-E21-005 are retrieval misses a prompt cannot fix.
+The result does not depend on the borderline grading calls: crediting every borderline row in v2's
+favour fixes at most one question (G-B10-001), against a floor of four.
+
+**What it shows.**
+- The model followed the instruction to be complete (completion tokens up 15%), but the failures
+  are errors of content, not of length. G-RBA-002 still lists two steps that are not in the cycle.
+  G-STR-001 again attributes the "verified facts" definition to reasonable grounds to suspect, which
+  is the definition of "believe". G-B10-001 gives examples but no definition. G-CPR-004 still omits
+  what the report covers.
+- Together with experiment 3.1, this points at the 7B model's reading of the sources as the likely
+  limit, not at how much context it gets or how it is asked. That is a hypothesis; step 3.3 tests it.
+- Cost: p95 up about 6 s, with no gain.
+
+**Grading caveat.** Drafted by Claude against the v2 rubrics, with the grader aware of which run was
+which. Borderline rows: G-B10-001 (no general definition, fails), G-B10-006 (credited for concentration
+risk strategies without multi-cloud), G-RBA-003 (omits the four risk types; not credited, counts as
+broken), G-B13-003 and G-E23-006 (extra statements not in the key points, source not checked),
+G-RBA-004 (extra clause). None of these changes the verdict.
+
+**Tuning budget.** One of the two prompt versions allowed on this dev set is used. The rule above
+says a v3 needs a new written rule and the owner's decision first; nothing in this result argues for
+spending it.
 
 ## Conditions for starting Phase 3
 

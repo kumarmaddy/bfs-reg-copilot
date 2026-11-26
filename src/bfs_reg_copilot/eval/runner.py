@@ -11,7 +11,7 @@ import json
 import shutil
 import subprocess
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -60,14 +60,21 @@ def require_holdout_confirmation(split: Split, *, confirmed: bool, reason: str) 
         )
 
 
-def select_items(gold: GoldSet, split: Split, limit: int | None) -> tuple[list[str], list[str]]:
+def select_items(
+    gold: GoldSet, split: Split, limit: int | None, only: Sequence[str] | None = None
+) -> tuple[list[str], list[str]]:
     """Ids to run and ids skipped (items that cannot be run yet). `limit` is per kind, by id."""
     chosen: list[str] = []
     skipped: list[str] = []
+    unknown = sorted(set(only or ()) - {i.id for i in gold.items if i.split == split})
+    if unknown:
+        raise ValueError(f"not in the {split.value} split: {', '.join(unknown)}")
     for kind in KINDS:
         items = sorted((i for i in gold.of_kind(kind) if i.split == split), key=lambda i: i.id)
         runnable = []
         for item in items:
+            if only is not None and item.id not in only:
+                continue
             if isinstance(item, AdversarialItem) and not item.scored:
                 skipped.append(item.id)
             else:
@@ -84,11 +91,12 @@ def run_eval(
     gold_hash: str,
     commit: str,
     limit: int | None = None,
+    only: Sequence[str] | None = None,
     clock: Callable[[], datetime] = lambda: datetime.now(UTC),
     progress: Callable[[int, int, str], None] | None = None,
 ) -> tuple[RunMeta, list[RunRecord]]:
     started = clock()
-    ids, skipped = select_items(gold, split, limit)
+    ids, skipped = select_items(gold, split, limit, only)
     by_id = {i.id: i for i in gold.items}
     records: list[RunRecord] = []
     for position, item_id in enumerate(ids, start=1):

@@ -14,13 +14,16 @@ from bfs_reg_copilot.embed.compare import ModelResult
 from bfs_reg_copilot.embed.fakes import HashingEmbedder
 from bfs_reg_copilot.embed.indexer import index_model
 from bfs_reg_copilot.embed.search import dense_scored, fulltext_scored
-from bfs_reg_copilot.eval.gold import AnswerableItem
+from bfs_reg_copilot.eval.gold import AnswerableItem, load_gold
 from bfs_reg_copilot.ingest.chunk_store import write_chunks
 from bfs_reg_copilot.ingest.chunking import Chunk
 from bfs_reg_copilot.retrieve.evaluate import (
+    all_support_within,
     evaluate_retriever,
     hybrid_verdict,
     render_comparison,
+    render_ranks,
+    support_ranks,
 )
 from bfs_reg_copilot.retrieve.retrievers import (
     DenseRetriever,
@@ -29,6 +32,7 @@ from bfs_reg_copilot.retrieve.retrievers import (
     make_retrievers,
     rrf,
 )
+from bfs_reg_copilot.retrieve.types import Hit
 from bfs_reg_copilot.store.db import Conn
 from bfs_reg_copilot.store.loader import load_source
 from dbhelpers import make_chunk as _make_chunk
@@ -196,3 +200,52 @@ def test_evaluate_retriever_scores_and_times_each_question(migrated: Conn, tmp_p
     assert (result.n, result.hits[1], result.hits[5]) == (1, 1, 1)
     assert len(result.latencies) == 1
     assert result.latencies[0] >= 0
+
+
+# --- support ranks (no database) ---------------------------------------------------------------
+
+
+class _Ranked:
+    is_test_double = True
+
+    def __init__(self, name: str, listing: dict[str, list[str]]) -> None:
+        self.name = name
+        self._listing = listing
+
+    def retrieve(self, question: str, k: int) -> list[Hit]:
+        return [Hit(c, 1.0) for c in self._listing.get(question, [])[:k]]
+
+
+def _answerable(n: int) -> list[AnswerableItem]:
+    gold = load_gold(Path(__file__).resolve().parent.parent / "eval" / "gold" / "gold-v2.yaml")
+    return [i for i in gold.items if isinstance(i, AnswerableItem)][:n]
+
+
+def test_support_ranks_report_each_chunk_and_none_beyond_the_depth() -> None:
+    item = _answerable(1)[0]
+    first = item.supporting_chunks[0]
+    retriever = _Ranked("dense:x", {item.question: ["A-X:aaaaaaaaaaaa:s001:c000", first]})
+    rows = support_ranks({"dense:x": retriever}, [item], depth=5)
+    by_chunk = {r.chunk_id: r.ranks["dense:x"] for r in rows}
+    assert by_chunk[first] == 2
+    others = [c for c in item.supporting_chunks if c != first]
+    assert all(by_chunk[c] is None for c in others)
+
+
+def test_all_support_within_is_stricter_than_any_hit() -> None:
+    multi = next(i for i in _answerable(40) if len(i.supporting_chunks) >= 2)
+    listing = {multi.question: [multi.supporting_chunks[0]]}  # one of several supporting chunks
+    rows = support_ranks({"dense:x": _Ranked("dense:x", listing)}, [multi], depth=5)
+    assert all_support_within(rows, "dense:x", 5) == (0, 1)  # any-hit would count this as a hit
+    full = {multi.question: list(multi.supporting_chunks)}
+    rows = support_ranks({"dense:x": _Ranked("dense:x", full)}, [multi], depth=50)
+    assert all_support_within(rows, "dense:x", 50) == (1, 1)
+
+
+def test_render_ranks_lists_the_detail_items_and_a_coverage_table() -> None:
+    item = _answerable(1)[0]
+    retriever = _Ranked("dense:x", {item.question: [item.supporting_chunks[0]]})
+    rows = support_ranks({"dense:x": retriever}, [item], depth=5)
+    text = "\n".join(render_ranks(rows, ["dense:x"], [item.id]))
+    assert "every supporting chunk within the top k" in text
+    assert item.id in text

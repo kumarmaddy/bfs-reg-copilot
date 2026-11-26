@@ -458,7 +458,7 @@ supporting chunk ranks under dense, keyword and hybrid retrieval, down to rank 5
 |---|---|
 | G-E21-005 | Retrieval: none of the five supporting chunks reached the model (dense ranks 6, 9, 13, 15, 48) |
 | G-STR-003 | Retrieval: the supporting chunk is beyond dense rank 50 (hybrid 28, keyword 11); the model refused |
-| G-RBA-002 | Retrieval and ingestion: 3 of 7 supporting chunks reached the model; the step names also sit in a diagram that is not ingested |
+| G-RBA-002 | Retrieval: 3 of 7 supporting chunks reached the model (an earlier note that the step names sit in a diagram that is not ingested was wrong: the gold-context probe answered all six steps from corpus text) |
 | G-B10-001 | Chunking and retrieval: a bulleted list is split across two chunks and only one reached the model |
 | G-B13-001, G-CPR-004, G-E21-001, G-STR-001 | The needed text was in the context and the model left points out |
 
@@ -561,3 +561,70 @@ questions; a real reranker did not come close to that ceiling. A different pool 
 reranker model would be a new experiment with its own rule; none is planned. Revisit only if the
 corpus or the chunking changes (the list split and the diagram are chunking and ingestion issues,
 not ranking issues). The reranker server notes in doc 21 stay for reproducibility.
+
+## Experiment 3.6a chunk audit: ingestion and chunking changes closed (2026-11-26)
+
+`eval chunk-audit` (read-only) counted two suspected causes on the reference run
+(`20261125T183115Z-baseline-dev`, 32 answerable dev questions). Rules, stated so they can be
+argued with: a chunk is low-value if it is the first section of its page or has under 150
+characters; a list is cut if the last line of a chunk and the first line of the next chunk of the
+same section are both list items.
+
+| Count | Result |
+|---|---|
+| Context slots held by low-value chunks | 17 of 160 (11%) |
+| Questions with at least one low-value slot | 14 (10 pass, 4 fail) |
+| Corpus chunk boundaries inside a list | 37 of 204 (18%) |
+| Dev questions whose gold chunks sit on a cut list | 7 (4 pass, 3 fail) |
+
+Reading: low-value slots do not separate failures from passes (42% of passing questions, 50% of
+failing ones). Of the three failing questions with cut-list gold chunks, G-CPR-004 had both chunks
+in context (the model left points out), G-STR-003 is a retrieval vocabulary miss, and only
+G-B10-001 (one chunk missing) could plausibly be helped by a chunking change. A chunking change
+re-ids chunks and forces a gold v3 and a new reference run; the best case is one question of 32,
+with a risk of breaking items that pass. **Decision: no ingestion or chunking slice for M1.** The
+diagram hypothesis for G-RBA-002 is withdrawn (see the correction in the 3.4 table above). Revisit
+only if a new source is added or the chunker is changed for another reason.
+
+M1 stands at 24/32 (75%) against the doc 02 target of at least 90% (29 of 32). Everything tried so
+far on retrieval, context size, prompt and model size has failed its rule; what remains is the
+rubric review below, a stronger generator (Phase 4, server GPU), and the optional fine-tuning item.
+
+## Rubric review rule (written 2026-11-26, before the sheet was read)
+
+Questions: G-B10-001, G-B13-001, G-CPR-004, G-E21-001, G-STR-001, G-STR-003, whose supporting text
+reached the model and whose answers still missed points. The owner reads each key point against the
+full gold chunk text (`eval rubric-review` writes the sheet to `eval/runs/rubric-review.md`, not in
+git) and marks it S (the source states it), P (the source implies it; the key point adds a detail)
+or N (the source does not support it).
+
+- A rubric is changed only for an N point, or a P point that the pass rule requires. A model that
+  missed an S point is a model failure and the rubric stays.
+- Every change is recorded with the source sentence that decided it. Raising M1 by editing
+  rubrics is the obvious bias, so the bar is the source text and nothing else.
+- Any change makes a new gold version (v3), done in its own slice: re-grade only the affected
+  items on the reference run, restate M1 for v2 and v3 side by side, and do not touch the hold-out.
+- The review is done once, before the Phase 3 summary, and the outcome is written here.
+
+Outcome (2026-11-26) [owner to confirm the ratings]: six rubrics reviewed against the gold chunk
+text. All 21 key points are stated by the source (S); none is P or N, so **no rubric changes**.
+The grades of record for the five reference-run failures were re-checked against the model answers
+and hold:
+
+| Question | Grader hit | What the answer lacks |
+|---|---|---|
+| G-B10-001 | 1, 2 | the examples (point 3; pass rule all) |
+| G-B13-001 | 1 | the example roles and the stature point; the model paraphrased the less specific Principle 1 chunk and ignored the chunk that lists the roles |
+| G-CPR-004 | 1, 3 | the previous-review-first rule and the report contents (points 2, 4; pass rule 3 of 4) |
+| G-E21-001 | 1, 2 | "typically greater than risk appetite" (point 3; pass rule all), stated in the sentence before the one the model used |
+| G-STR-001 | 1 | the answer attributes "verified facts" to reasonable grounds to suspect, which the source says of reasonable grounds to believe, so it contradicts the source (mark `contradicts` in the grades) |
+
+Two rubrics are strict in a way the rule did not anticipate: the key points are stated by the
+source, but the question does not ask for all of them. G-CPR-004 asks how often and to whom, and
+an answer that gives exactly those (points 1 and 3) fails a 3-of-4 rule; G-B10-001 asks what
+counts and what is excluded, and its pass rule also requires the examples. They are kept, because
+the rule allows a change only for source support and relaxing them after seeing the result would
+be the bias the rule guards against. M1 is reported as 24 of 32 (75%); relaxing those two would give
+26 of 32 (81%) and is not adopted. A gold v3 for any other reason may revisit them with a rule
+written first. The six failures are model failures: the answer is terse and takes the most direct
+chunk or sentence, and in one case misattributes a definition.

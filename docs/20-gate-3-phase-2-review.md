@@ -525,3 +525,39 @@ top 5, grade with carried grades, and apply the 3.1 rule: (a) at least four fixe
 broken, (b) M5 stays at 0, (c) over-refusal on answerable questions rises by at most one, (d) p95
 at or below 32 s. Report flips by question. Under about six net flips the result is "promising,
 not proven". An ADR for adding the reranker is written only if Stage 1 is met.
+
+## Experiment 3.5 Stage 1 result: reranker (2026-11-26) - do not adopt
+
+Run: `retrieve ranks --rerank` (hybrid pool of 35, bge-reranker-v2-m3 through llama-server, 32 dev
+items, no generator). Items with every supporting chunk in the top k:
+
+| k | dense | keyword | hybrid | reranked |
+|---|---|---|---|---|
+| 5 | 27/32 | 16/32 | 22/32 | 25/32 |
+| 8 | 28/32 | 20/32 | 25/32 | 29/32 |
+| 10 | 28/32 | 20/32 | 26/32 | 29/32 |
+| 20 | 29/32 | 26/32 | 29/32 | 30/32 |
+| 50 | 31/32 | 30/32 | 32/32 | 32/32 |
+
+**Verdict under the pre-registered rule: not met.** The reranked top 5 covers 25 items against the
+30 required (dense: 27). The reranker is dropped for this baseline. Stage 2 (a generator run) is
+not run, and no ADR is written. Nothing was truncated to fit the server batch.
+
+What the ranks show:
+- It fixes the case it was meant for: the G-STR-003 supporting chunk moves from beyond dense rank 50
+  (hybrid 28) to rank 5.
+- It loses more than it gains at k = 5: three items that dense covered are no longer fully covered
+  (the output lists detail only for items dense missed, so which three is not recorded here), and
+  only STR-003 is gained.
+- It orders by how directly a chunk answers the question. Questions whose answer is spread over
+  several chunks lose the supporting chunks that are less direct: G-E21-005 (ranks 1, 9, 13, 18,
+  26), G-B10-001 (the list continuation falls from 11 to 20) and G-RBA-002 (several steps fall
+  further than under dense or hybrid).
+- It helps only at a deeper cut (29 at k = 8, 30 at k = 20), which costs context the generator
+  already handles poorly (experiment 3.1).
+
+The gold-context probe (above) showed that perfect retrieval would fix three of four affected
+questions; a real reranker did not come close to that ceiling. A different pool size, cut or
+reranker model would be a new experiment with its own rule; none is planned. Revisit only if the
+corpus or the chunking changes (the list split and the diagram are chunking and ingestion issues,
+not ranking issues). The reranker server notes in doc 21 stay for reproducibility.

@@ -85,6 +85,12 @@ def _build_parser() -> argparse.ArgumentParser:
         help="system prompt for `baseline` (v1 is the measured baseline)",
     )
     run.add_argument("--split", choices=[s.value for s in Split], default=Split.DEV.value)
+    run.add_argument("--items", default="", help="only these item ids, comma-separated")
+    run.add_argument(
+        "--gold-context",
+        action="store_true",
+        help="ceiling probe: give the generator the gold supporting chunks (dev only)",
+    )
     run.add_argument("--limit", type=int, default=None, help="at most N items per kind (smoke)")
     run.add_argument("--out-dir", type=Path, default=DEFAULT_RUNS_DIR, help="where runs are stored")
     run.add_argument("--repo-root", type=Path, default=Path("."), help="repo root (git commit)")
@@ -159,6 +165,9 @@ def _run(gold: GoldSet, args: argparse.Namespace) -> int:
     except HoldoutRefused as exc:
         print(f"ERROR {exc}")
         return EXIT_HOLDOUT_REFUSED
+    if args.gold_context and (args.pipeline != BASELINE or split != Split.DEV):
+        print("ERROR --gold-context works only with `--pipeline baseline` on the dev split")
+        return EXIT_INVALID
     if args.pipeline == BASELINE:
         return _run_baseline(gold, args, split)
     return _finish_run(gold, args, split, DOUBLES[args.pipeline](gold))
@@ -171,6 +180,7 @@ def _run_baseline(gold: GoldSet, args: argparse.Namespace, split: Split) -> int:
 
     from bfs_reg_copilot.gateway.types import GatewayError
     from bfs_reg_copilot.rag.factory import build_baseline
+    from bfs_reg_copilot.retrieve.gold_context import gold_context_map
     from bfs_reg_copilot.store.db import connect, database_url, describe
     from bfs_reg_copilot.store.loader import counts, embedded_by_model
 
@@ -186,7 +196,13 @@ def _run_baseline(gold: GoldSet, args: argparse.Namespace, split: Split) -> int:
             print(f"ERROR the database has {have}/{total} chunks embedded with bge-m3")
             return EXIT_UNREADABLE
         try:
-            pipeline = build_baseline(conn, args.model, args.k, args.prompt_version)
+            pipeline = build_baseline(
+                conn,
+                args.model,
+                args.k,
+                args.prompt_version,
+                gold_context_map(gold) if args.gold_context else None,
+            )
             pipeline.check_ready()
         except GatewayError as exc:
             print(f"ERROR {exc}")
@@ -277,6 +293,7 @@ def _finish_run(
         gold_hash=gold_sha256(args.gold),
         commit=git_commit(args.repo_root),
         limit=args.limit,
+        only=[i.strip() for i in args.items.split(",") if i.strip()] or None,
         progress=progress,
     )
     run_dir = write_run(args.out_dir, meta, records)

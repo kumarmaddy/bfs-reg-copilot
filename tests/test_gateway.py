@@ -187,3 +187,28 @@ def test_check_ready_reports_an_unreachable_server() -> None:
 
     with pytest.raises(GatewayError, match="cannot reach Ollama"):
         gateway(handler).check_ready()
+
+
+def test_think_is_absent_by_default_and_sent_only_when_asked() -> None:
+    seen: list[dict[str, Any]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(json.loads(request.content))
+        return reply()
+
+    plain = gateway(handler)
+    plain.complete(MESSAGES)
+    assert "think" not in seen[0]  # every earlier run sent exactly this payload
+    assert "think" not in plain.describe() or plain.describe().get("think") is None
+
+    quiet = gateway(handler, think=False)
+    quiet.complete(MESSAGES)
+    assert seen[1]["think"] is False
+    assert quiet.describe()["think"] == "false"
+
+
+def test_the_experiment_candidates_are_on_the_reviewed_list() -> None:
+    from bfs_reg_copilot.gateway.ollama import ALLOWED_MODELS
+
+    for tag in ("qwen3.5:9b", "qwen3:14b", "gemma3:12b", "gemma4:12b", "phi4:14b"):
+        assert tag in ALLOWED_MODELS

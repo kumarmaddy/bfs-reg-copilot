@@ -54,10 +54,12 @@ class RagPipeline:
         k: int = DEFAULT_K,
         provenance: Mapping[str, str] | None = None,
         prompt_version: str = PROMPT_VERSION,
+        max_answer_tokens: int = MAX_ANSWER_TOKENS,
     ) -> None:
         if prompt_version not in SYSTEMS:
             raise ValueError(f"unknown prompt version {prompt_version!r}")
         self._prompt_version = prompt_version
+        self._max_answer_tokens = max_answer_tokens  # a reasoning model needs room to think first
         self._retriever = retriever
         self._chunks = chunks
         self._gateway = gateway
@@ -79,7 +81,7 @@ class RagPipeline:
             "retriever": self._retriever.name,
             "k": str(self._k),
             "prompt_version": self._prompt_version,
-            "max_answer_tokens": str(MAX_ANSWER_TOKENS),
+            "max_answer_tokens": str(self._max_answer_tokens),
             **self._provenance,  # embedding model digest and corpus fingerprint, when known
         }
 
@@ -89,7 +91,7 @@ class RagPipeline:
         completion = self._gateway.complete(
             build_messages(question, context, self._prompt_version),
             schema=answer_schema(),
-            max_tokens=MAX_ANSWER_TOKENS,
+            max_tokens=self._max_answer_tokens,
         )
         answer, malformed = to_pipeline_answer(completion.text, context)
         self.malformed += malformed

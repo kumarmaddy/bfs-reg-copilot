@@ -629,37 +629,50 @@ be the bias the rule guards against. M1 is reported as 24 of 32 (75%); relaxing 
 written first. The six failures are model failures: the answer is terse and takes the most direct
 chunk or sentence, and in one case misattributes a definition.
 
-## Pre-registered rule for 3.7 (generator model bake-off; written 2026-11-26, before any run)
+## Pre-registered rule for 3.7 (model comparison; written 2026-11-26, before any candidate run)
 
-Why: the rubric review (above) found no unsupported rubric points, and the context diagnostic
-showed the needed text reached the model in five of the eight persistent failures. The remaining
-cause is the generator: answers that are terse, take the most direct chunk, or misattribute a
-definition. The one larger model tried (qwen2.5:14b, same family as the 7B) did worse, so this
-experiment tests different families of similar size.
+Question: with prompt v1 and k = 5 unchanged, does another generator of 9 to 14 billion
+parameters answer more dev questions correctly than qwen2.5:7b, and what does it cost in time? The
+7B reference is run `20261125T183115Z-baseline-dev` (M1 24 of 32), graded. Candidates, each run on
+its own against that reference: gemma3:12b, phi4:14b, gemma4:12b, qwen3.5:9b, qwen3:14b
+(qwen2.5:14b was run in 3.3 and is not repeated). Everything else is held constant: prompt v1,
+k = 5, temperature 0, seed 20261123, 8192-token window, the serving settings of doc 21, dev split
+only. The hold-out is not used. The candidates are added to the gateway's reviewed list for this
+experiment only; that is not approval to deploy them (licence and model-risk review come first).
 
-Round 1 candidates, in this order: `gemma3:12b`, then `phi4` (14B). Tags and sizes are confirmed
-with `ollama show` before the run. Nothing else changes: prompt v1, k = 5, temperature 0, the seed
-and `num_ctx` of the reference run, the same Ollama serving settings (`OLLAMA_MAX_LOADED_MODELS=2`,
-`OLLAMA_KEEP_ALIVE=5m`), the full dev set. Reference run for the comparison:
-`20261125T183115Z-baseline-dev` (qwen2.5:7b, 24 of 32).
+**Variants.** A model that reports the "thinking" capability is run twice, as separate runs: with
+thinking on (the model's default, answer budget raised to 3500 tokens because the thinking uses the
+budget) and with thinking off (`--no-think`, budget 512). Every other model is run once at the
+reference's budget of 512. The no-think and non-reasoning runs therefore use exactly the
+reference's conditions. In the thinking-on run an answer cut off before its JSON is complete counts
+as a malformed output. Both settings are recorded in each run's settings (`think`,
+`max_answer_tokens`). Which models are reasoning models is read from Ollama, not assumed.
 
-Rule per candidate (the 3.1 rule, with latency reported but not gated because this is a
-ceiling-finding run; `--max-p95 1000`):
-- (a) at least 4 questions fixed and at most 1 broken;
-- (b) fabricated citations (M5) stay at 0;
-- (c) refusals of answerable questions rise by at most 1;
-- (d) M8 stays at 3 of 3 (the 14B leaked the system prompt on G-ADV-001);
-- (e) malformed model outputs: if more than 3 of the 47 dev answers are not valid JSON in the
-  required shape, the model is recorded as a format failure and not adopted.
+**Time budget.** Before the full runs, each variant answers three fixed answerable questions
+(G-B13-001, G-CPR-004, G-STR-001) after a warm-up, timed end to end; the full-run time is projected
+as seconds per item times 47. A variant is skipped if the three-question run is not clean (item
+errors or malformed outputs) or if its projection exceeds 70% of the per-run cap of 90 minutes (63
+minutes). Each full run is stopped at the 90-minute cap and logged, and no run starts if the total
+budget of 600 minutes would be exceeded. A skipped or stopped variant is reported with its reason;
+it is not a failure of the model, and it is not retried with other settings in this experiment.
 
-Report flips by question, and the answers that contradict the source (`contradicts`), because the
-G-STR-001 misattribution shows a fluent cited answer can still be wrong. Under about 6 net flips
-the result is "promising, not proven".
+**Stage 1, no grading.** A completed run is dropped without grading if any of: item errors above
+zero; malformed outputs above two; M5 (fabricated citations) above zero; over-refusal on
+answerable questions above two of 32 (the reference has one); correct refusals (M2) below the
+reference. Time is recorded, not gated: latency p50 and p95, total model time and completion
+tokens (which include thinking tokens), next to the reference's 11.5 s and 16.5 s.
 
-Limits stated now. Choosing the best of several models on 32 questions overstates the gain, so
-meeting the rule is not adoption: adoption is the owner's decision after the Phase 4 serving
-decision (a model that needs 40 s per question on this laptop is a server-GPU question), and the
-chosen model is confirmed once on the hold-out at Gate 3 under ADR-0014. At most four candidates in
-total for 3.7; any candidate after round 1 (for example sub-10B models, judged on whether they
-match the 7B at lower latency rather than beat it) needs its own entry here, written before its
-run.
+**Stage 2, grading.** Answers identical to the reference keep their carried grades; every changed
+answer is graded against the rubrics (drafts by Claude, adopted by the owner after reading the
+answers). Then the 3.1 rule: (a) at least four fixed and at most one broken, (b) M5 stays 0,
+(c) over-refusal rises by at most one, plus (d) the adversarial questions (M8) stay at 3 of 3,
+because the 14B leaked its system prompt in 3.3. The p95 limit is not applied; time feeds the
+Phase 4 serving decision. The result table states, per variant, questions correct, net flips and
+extra seconds per question against the reference, so accuracy and time are read together, and for
+a reasoning model the thinking-on and thinking-off runs sit side by side. A variant that meets the
+rule with fewer than about six net flips is "promising, not proven".
+
+**Multiple comparisons.** Up to eight variants against one reference means one of them may pass by
+chance. Meeting the rule makes a variant a shortlist entry for confirmation, not an adoption:
+confirmation needs a repeat on the same dev set under the Phase 4 serving settings and, at the
+Gate, one use of the hold-out. Report all variants, including those that fail or are skipped.

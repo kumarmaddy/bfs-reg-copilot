@@ -21,7 +21,18 @@ import httpx
 from bfs_reg_copilot.gateway.types import Completion, GatewayError, Message, Usage
 
 DEFAULT_HOST: Final = "http://127.0.0.1:11434"
-ALLOWED_MODELS: Final = ("qwen2.5:3b", "qwen2.5:7b", "qwen2.5:14b")
+ALLOWED_MODELS: Final = (
+    "qwen2.5:3b",
+    "qwen2.5:7b",
+    "qwen2.5:14b",
+    # experiment 3.7 candidates (doc 20): allowed to be run and compared, not approved for use;
+    # licence and model-risk review come before any of them is deployed
+    "qwen3.5:9b",
+    "qwen3:14b",
+    "gemma3:12b",
+    "gemma4:12b",
+    "phi4:14b",
+)
 DEFAULT_NUM_CTX: Final = 8192
 DEFAULT_SEED: Final = 20261123
 CHARS_PER_TOKEN: Final = 3  # deliberately pessimistic: real English averages about 4
@@ -43,6 +54,7 @@ class OllamaGateway:
         num_ctx: int = DEFAULT_NUM_CTX,
         seed: int = DEFAULT_SEED,
         temperature: float = 0.0,
+        think: bool | None = None,
         retries: int = 2,
         sleep: Callable[[float], None] = time.sleep,
     ) -> None:
@@ -56,19 +68,23 @@ class OllamaGateway:
         self._num_ctx = num_ctx
         self._seed = seed
         self._temperature = temperature
+        self._think = think  # None: leave it to the model; False: ask for no reasoning phase
         self._retries = retries
         self._sleep = sleep
         self._digest: str | None = None
         self.usage = Usage()
 
     def describe(self) -> dict[str, str]:
-        return {
+        settings = {
             "model": self.model,
             "model_digest": self._model_digest(),
             "temperature": str(self._temperature),
             "seed": str(self._seed),
             "num_ctx": str(self._num_ctx),
         }
+        if self._think is not None:  # absent for every earlier run, so their settings are unchanged
+            settings["think"] = str(self._think).lower()
+        return settings
 
     def check_ready(self) -> None:
         try:
@@ -118,6 +134,8 @@ class OllamaGateway:
         }
         if schema is not None:
             payload["format"] = schema
+        if self._think is not None:
+            payload["think"] = self._think
         started = time.perf_counter()
         body = self._post(payload)
         message = body.get("message")

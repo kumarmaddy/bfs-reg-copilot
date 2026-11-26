@@ -106,3 +106,23 @@ Latency and, for a larger model, run time depend on how Ollama is set up, so it 
   gold version needs the answers.
 - One change per experiment. Two changes in one run cannot be told apart.
 - The hold-out is not used for experiments. It is first run at Gate 4 (doc 02).
+
+## Reranker server (llama.cpp)
+
+Used only by `retrieve ranks --rerank` (and a later reranked run). It is a second local process,
+separate from Ollama.
+
+```powershell
+winget install llama.cpp
+llama-server -hf smarttasks/bge-reranker-v2-m3-GGUF:Q4_K_M --reranking --port 8081 --host 127.0.0.1 -b 2048 -ub 2048
+```
+
+Leave it running in its own terminal; stop it with Ctrl+C. Application Control may block the first
+launch; retry. Then, in another terminal, with Postgres and Ollama up:
+
+```powershell
+uv run python -m bfs_reg_copilot.retrieve ranks --rerank
+```
+
+The last lines state whether the Stage 1 rule of doc 20 is met. Passages longer than 6000
+characters are cut to fit the server batch; the count is printed.

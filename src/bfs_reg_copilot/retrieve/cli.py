@@ -16,7 +16,15 @@ from bfs_reg_copilot.retrieve.evaluate import (
     evaluate_retriever,
     render_comparison,
     render_ranks,
+    rerank_verdict,
     support_ranks,
+)
+from bfs_reg_copilot.retrieve.rerank import (
+    DEFAULT_POOL,
+    DEFAULT_URL,
+    LlamaServerReranker,
+    RerankedRetriever,
+    RerankError,
 )
 from bfs_reg_copilot.retrieve.retrievers import make_retrievers
 from bfs_reg_copilot.retrieve.types import Retriever
@@ -28,6 +36,7 @@ EXIT_OK = 0
 EXIT_UNREACHABLE = 1
 EXIT_NOT_READY = 2
 EXIT_EMBED_FAILED = 4
+EXIT_RERANK_FAILED = 5
 DEFAULT_MODEL = "bge-m3"
 
 
@@ -44,6 +53,13 @@ def _build_parser() -> argparse.ArgumentParser:
     ranks.add_argument(
         "--items", default="", help="item ids to list in detail (default: those not covered at 5)"
     )
+    ranks.add_argument(
+        "--rerank",
+        action="store_true",
+        help="add a column: hybrid top pool reordered by the reranker (needs llama-server)",
+    )
+    ranks.add_argument("--reranker-url", default=DEFAULT_URL)
+    ranks.add_argument("--pool", type=int, default=DEFAULT_POOL, help="candidates to rerank")
     ask = sub.add_parser("ask", help="show the chunks a retriever returns for one question")
     ask.add_argument("question")
     ask.add_argument("--retriever", default="dense", choices=["dense", "fulltext", "hybrid"])
@@ -76,11 +92,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             if args.command == "compare":
                 return _compare(conn, retrievers)
             if args.command == "ranks":
-                return _ranks(conn, retrievers, args.items)
+                return _ranks(conn, retrievers, args)
             return _ask(conn, retrievers[args.retriever], args.question, args.k)
         except EmbedError as exc:
             print(f"embedding failed: {exc}")
             return EXIT_EMBED_FAILED
+        except RerankError as exc:
+            print(exc)
+            return EXIT_RERANK_FAILED
 
 
 def _compare(conn: Conn, retrievers: dict[str, Retriever]) -> int:
@@ -98,12 +117,24 @@ def _compare(conn: Conn, retrievers: dict[str, Retriever]) -> int:
     return EXIT_OK
 
 
-def _ranks(conn: Conn, retrievers: dict[str, Retriever], wanted: str) -> int:
+def _ranks(conn: Conn, retrievers: dict[str, Retriever], args: argparse.Namespace) -> int:
+    wanted: str = args.items
     try:
         items = dev_items(load_gold(DEFAULT_GOLD))
     except GoldError as exc:
         print(exc)
         return EXIT_NOT_READY
+    reranker = None
+    if args.rerank:
+        from bfs_reg_copilot.rag.pipeline import DbChunkSource
+
+        reranker = LlamaServerReranker(args.reranker_url)
+        retrievers = {
+            **retrievers,
+            "reranked": RerankedRetriever(
+                retrievers["hybrid"], DbChunkSource(conn), reranker, args.pool
+            ),
+        }
     rows = support_ranks(retrievers, items)
     names = list(retrievers)
     detail = [i.strip() for i in wanted.split(",") if i.strip()]
@@ -120,6 +151,10 @@ def _ranks(conn: Conn, retrievers: dict[str, Retriever], wanted: str) -> int:
         }
         detail = [i.id for i in items if i.id not in covered]
     print("\n".join(render_ranks(rows, names, detail)))
+    if reranker is not None:
+        print()
+        print(rerank_verdict(rows, "reranked", "dense"))
+        print(f"passages truncated to fit the server batch: {reranker.truncated}")
     return EXIT_OK
 
 

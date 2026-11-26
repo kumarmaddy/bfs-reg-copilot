@@ -124,3 +124,21 @@ def render_ranks(
         shown = "  ".join(cells)
         lines.append(f"{row.item_id:<10} {row.chunk_id.split(':', 1)[1]:<26} {shown}")
     return lines
+
+
+RERANK_MIN_COVERED = 30  # pre-registered (doc 20): dense covers 27 of 32 at the top 5
+
+
+def rerank_verdict(
+    rows: Sequence[SupportRank],
+    reranked: str,
+    dense: str,
+    k: int = 5,
+    needed: int = RERANK_MIN_COVERED,
+) -> str:
+    got, total = all_support_within(rows, reranked, k)
+    base, _ = all_support_within(rows, dense, k)
+    detail = f"every supporting chunk in the top {k}: {base} -> {got} of {total}"
+    if got >= needed:
+        return f"Stage 1 rule met ({detail}; needs {needed}): go on to the generator run."
+    return f"Stage 1 rule not met ({detail}; needs {needed}): drop the reranker for this baseline."

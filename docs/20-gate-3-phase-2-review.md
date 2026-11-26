@@ -446,3 +446,82 @@ This changes the order in the table above, so it needs the owner's decision befo
 
 Merge this review, then slice 3.0. When C-1 to C-3 are ticked and this document is merged, create
 the `phase-2-complete` tag. Slices 3.1 onward run only after C-4.
+
+## Experiment 3.4 result: why the persistent failures fail (2026-11-26)
+
+3.4 is a diagnostic, not an adopt-or-reject experiment. It looked at the eight questions that
+still fail with the 7B model, prompt v1 and k = 5 (reference run `20261125T183115Z-baseline-dev`),
+using `eval context` (the exact text the model received) and `retrieve ranks` (where each gold
+supporting chunk ranks under dense, keyword and hybrid retrieval, down to rank 50).
+
+| Question | Finding |
+|---|---|
+| G-E21-005 | Retrieval: none of the five supporting chunks reached the model (dense ranks 6, 9, 13, 15, 48) |
+| G-STR-003 | Retrieval: the supporting chunk is beyond dense rank 50 (hybrid 28, keyword 11); the model refused |
+| G-RBA-002 | Retrieval and ingestion: 3 of 7 supporting chunks reached the model; the step names also sit in a diagram that is not ingested |
+| G-B10-001 | Chunking and retrieval: a bulleted list is split across two chunks and only one reached the model |
+| G-B13-001, G-CPR-004, G-E21-001, G-STR-001 | The needed text was in the context and the model left points out |
+
+Every supporting chunk reached the model for 27 of 32 dev questions (23 of the 24 that pass, 4 of
+the 8 that fail). Items with every supporting chunk in the top k:
+
+| k | dense | keyword | hybrid |
+|---|---|---|---|
+| 5 | 27/32 | 16/32 | 22/32 |
+| 8 | 28/32 | 20/32 | 25/32 |
+| 20 | 29/32 | 26/32 | 29/32 |
+| 50 | 31/32 | 30/32 | 32/32 |
+
+Dense is the best retriever at the k in use, and hybrid is worse at k = 5. Hybrid is the better
+pool for a reranker: a pool of 35 holds every supporting chunk of the four retrieval-affected
+items, while dense at depth 50 misses one item. The four "model left points out" items are not
+helped by better retrieval. Whether their rubrics ask for more than the source says is a manual
+review against the source text, planned for the end of Phase 3 with the borderline grades (a
+rubric changes only if the source does not support the key point, never because the model missed
+it; a change makes a new gold version and resets comparisons).
+
+### Gold-context probe (ceiling check)
+
+Rule, written before the run: give the generator the gold supporting chunks for G-E21-005,
+G-STR-003, G-RBA-002 and G-B10-001 (then normal dense hits to fill five slots). Three or four of
+four fixed means retrieval is the bottleneck and a reranker experiment is justified; zero to two
+means the reranker is closed for this baseline.
+
+Result (run `20261126T024406Z-baseline-dev`, same model, prompt and serving settings): **3 of 4
+fixed** (G-B10-001, G-E21-005, G-RBA-002). G-STR-003 still fails: the answer states that the
+client may not be told but omits that this applies whether or not an investigation has begun,
+although the source sentence was in the context. The grades are drafts adopted by the owner
+[owner to confirm]. The rule is met. Limits of the probe: gold chunks came first (a favourable
+order), G-RBA-002 was given all seven gold chunks while a real run passes five, and four
+questions are too few for a statistical claim. It is a ceiling, not a forecast. Realistic gain is
+two to three questions of 32, below the roughly six net flips the sign test needs.
+
+### Reranker feasibility spike
+
+bge-m3 cannot serve as the reranker: it is a bi-encoder and would reproduce the dense order. A
+cross-encoder is needed. Ollama has no native rerank endpoint that we could confirm. A GGUF of
+bge-reranker-v2-m3 (Q4_K_M, `smarttasks/bge-reranker-v2-m3-GGUF`) runs under llama.cpp's
+`llama-server` (build 12721) on this laptop, which is allowed by Application Control (first launch
+blocked, retry worked). Device: Vulkan0, Intel Arc, 18 GiB. Ranking sanity (STR-003 question,
+three texts): the "not allowed to inform anyone" passage ranked first. Timing: 35 passages of 382
+tokens in 6.2 s in one call that included warm-up (about 5.3 s steady from the server log). It
+needs `-b 2048 -ub 2048`; at the default batch of 512, passages over about 500 tokens are
+rejected. Expected cost: about 5 s per question at a pool of 35 (p50 11.5 s to about 17 s). The
+10 s p95 target in M3 was already missed.
+
+## Pre-registered rule for 3.5 (reranker; written 2026-11-26, before any reranked number)
+
+Setup: hybrid retriever, pool of 35, reranked by bge-reranker-v2-m3 through llama-server, final
+top 5, with everything else as in the reference run.
+
+**Stage 1, retrieval only** (`retrieve ranks --rerank`, no generator, no grading): the reranked
+top 5 must contain every supporting chunk for at least 30 of the 32 dev items (dense: 27). At most
+31 is reachable, because G-RBA-002 has seven gold chunks and only five fit. If Stage 1 is not met,
+the reranker is dropped for this baseline and recorded as "justified by the probe, not delivered
+by the reranker".
+
+**Stage 2, only if Stage 1 is met**: run all dev questions through the generator with the reranked
+top 5, grade with carried grades, and apply the 3.1 rule: (a) at least four fixed and at most one
+broken, (b) M5 stays at 0, (c) over-refusal on answerable questions rises by at most one, (d) p95
+at or below 32 s. Report flips by question. Under about six net flips the result is "promising,
+not proven". An ADR for adding the reranker is written only if Stage 1 is met.

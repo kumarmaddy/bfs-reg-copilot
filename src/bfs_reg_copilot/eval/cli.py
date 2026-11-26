@@ -133,6 +133,18 @@ def _build_parser() -> argparse.ArgumentParser:
     context.add_argument(
         "--out", type=Path, default=None, help="default: <run_dir>/context-report.md"
     )
+    audit = sub.add_parser(
+        "chunk-audit",
+        help="count low-value context slots and cut lists (read-only; needs the database)",
+    )
+    audit.add_argument("run_dir", type=Path)
+    audit.add_argument("--grades", type=Path, default=None, help="default: <run_dir>/grades.csv")
+    review = sub.add_parser(
+        "rubric-review",
+        help="write a sheet with each key point next to the gold source text (needs the database)",
+    )
+    review.add_argument("--items", default="", help="comma-separated item ids (default: six)")
+    review.add_argument("--out", type=Path, default=Path("eval/runs/rubric-review.md"))
     score = sub.add_parser("score", help="print M1, M2, M4, M5 and M8 for a stored run")
     score.add_argument("run_dir", type=Path)
     score.add_argument("--grades", type=Path, default=None, help="default: <run_dir>/grades.csv")
@@ -253,6 +265,76 @@ def _context(gold: GoldSet, args: argparse.Namespace, records: list[RunRecord]) 
     return EXIT_OK
 
 
+def _rubric_review(gold: GoldSet, args: argparse.Namespace) -> int:
+    from contextlib import closing
+
+    from pg8000.exceptions import DatabaseError, InterfaceError
+
+    from bfs_reg_copilot.eval.gold import AnswerableItem
+    from bfs_reg_copilot.eval.rubric_review import DEFAULT_ITEMS, render_sheet
+    from bfs_reg_copilot.rag.pipeline import DbChunkSource
+    from bfs_reg_copilot.store.db import connect, database_url, describe
+
+    wanted = [i.strip() for i in args.items.split(",") if i.strip()] or list(DEFAULT_ITEMS)
+    items = {i.id: i for i in gold.items if isinstance(i, AnswerableItem)}
+    unknown = [i for i in wanted if i not in items]
+    if unknown:
+        print(f"ERROR not answerable items in the gold set: {', '.join(unknown)}")
+        return EXIT_INVALID
+    try:
+        conn = connect()
+    except (OSError, InterfaceError, DatabaseError) as exc:
+        print(f"ERROR cannot connect to {describe(database_url())}: {type(exc).__name__}: {exc}")
+        return EXIT_UNREADABLE
+    with closing(conn):
+        ids = [c for i in wanted for c in items[i].supporting_chunks]
+        texts = {c.chunk_id: c.text for c in DbChunkSource(conn).fetch(ids)}
+    args.out.write_text("\n".join(render_sheet(gold, wanted, texts)) + "\n", encoding="utf-8")
+    print(f"wrote {len(wanted)} questions to {args.out} (corpus text: keep it out of git)")
+    return EXIT_OK
+
+
+def _chunk_audit(gold: GoldSet, args: argparse.Namespace, records: list[RunRecord]) -> int:
+    from contextlib import closing
+
+    from pg8000.exceptions import DatabaseError, InterfaceError
+
+    from bfs_reg_copilot.eval.chunk_audit import (
+        ChunkRow,
+        audit_run,
+        cut_list_chunks,
+        list_cut_boundaries,
+        summarise_audit,
+    )
+    from bfs_reg_copilot.store.db import connect, database_url, describe
+
+    grades_path = args.grades or args.run_dir / "grades.csv"
+    grades = read_grades(grades_path, gold) if grades_path.exists() else Grades()
+    try:
+        conn = connect()
+    except (OSError, InterfaceError, DatabaseError) as exc:
+        print(f"ERROR cannot connect to {describe(database_url())}: {type(exc).__name__}: {exc}")
+        return EXIT_UNREADABLE
+    with closing(conn):
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT chunk_id, source_id, section_index, chunk_index, chunk_count, text "
+            "FROM chunks WHERE superseded_at IS NULL"
+        )
+        rows = {
+            str(r[0]): ChunkRow(str(r[0]), str(r[1]), int(r[2]), int(r[3]), int(r[4]), str(r[5]))
+            for r in cur.fetchall()
+        }
+        conn.rollback()
+    every = list(rows.values())
+    cut = cut_list_chunks(every)
+    boundaries = sum(1 for r in every if r.chunk_index + 1 < r.chunk_count)
+    corpus_cut = len(list_cut_boundaries(every))
+    audits = audit_run(gold, records, grades, rows, cut)
+    print("\n".join(summarise_audit(audits, corpus_cut, boundaries)))
+    return EXIT_OK
+
+
 def _flips(gold: GoldSet, args: argparse.Namespace) -> int:
     runs = []
     for folder, grades_path in ((args.before, args.grades_before), (args.after, args.grades_after)):
@@ -321,9 +403,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _run(gold, args)
         if args.command == "flips":
             return _flips(gold, args)
+        if args.command == "rubric-review":
+            return _rubric_review(gold, args)
         meta, records = read_run(args.run_dir)
         if args.command == "context":
             return _context(gold, args, records)
+        if args.command == "chunk-audit":
+            return _chunk_audit(gold, args, records)
         if args.command == "grade-sheet":
             out = args.out or args.run_dir / "grades.csv"
             count = write_grading_sheet(out, gold, records)

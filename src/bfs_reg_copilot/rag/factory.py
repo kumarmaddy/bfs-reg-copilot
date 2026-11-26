@@ -7,7 +7,7 @@ from collections.abc import Mapping, Sequence
 from bfs_reg_copilot.embed.models import BGE_M3
 from bfs_reg_copilot.embed.ollama import OllamaEmbedder
 from bfs_reg_copilot.gateway.ollama import OllamaGateway
-from bfs_reg_copilot.rag.pipeline import DbChunkSource, RagPipeline
+from bfs_reg_copilot.rag.pipeline import MAX_ANSWER_TOKENS, DbChunkSource, RagPipeline
 from bfs_reg_copilot.rag.prompt import PROMPT_VERSION
 from bfs_reg_copilot.retrieve.gold_context import GoldContextRetriever
 from bfs_reg_copilot.retrieve.retrievers import DenseRetriever
@@ -24,6 +24,8 @@ def build_baseline(
     k: int = 5,
     prompt_version: str = PROMPT_VERSION,
     gold_context: Mapping[str, Sequence[str]] | None = None,
+    think: bool | None = None,
+    max_answer_tokens: int = MAX_ANSWER_TOKENS,
 ) -> RagPipeline:
     embedder = OllamaEmbedder(BGE_M3)
     retriever: Retriever = DenseRetriever(conn, embedder)
@@ -36,5 +38,11 @@ def build_baseline(
         "corpus_fingerprint": corpus_fingerprint(conn),
     }
     return RagPipeline(
-        retriever, DbChunkSource(conn), OllamaGateway(model), k, provenance, prompt_version
+        retriever,
+        DbChunkSource(conn),
+        OllamaGateway(model, think=think),
+        k,
+        provenance,
+        prompt_version,
+        max_answer_tokens,
     )

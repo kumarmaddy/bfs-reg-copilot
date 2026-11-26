@@ -91,6 +91,17 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="ceiling probe: give the generator the gold supporting chunks (dev only)",
     )
+    run.add_argument(
+        "--max-answer-tokens",
+        type=int,
+        default=None,
+        help="answer budget; default 512. A reasoning model spends it on thinking first",
+    )
+    run.add_argument(
+        "--no-think",
+        action="store_true",
+        help="ask a reasoning model not to think first (recorded in the run's settings)",
+    )
     run.add_argument("--limit", type=int, default=None, help="at most N items per kind (smoke)")
     run.add_argument("--out-dir", type=Path, default=DEFAULT_RUNS_DIR, help="where runs are stored")
     run.add_argument("--repo-root", type=Path, default=Path("."), help="repo root (git commit)")
@@ -192,6 +203,7 @@ def _run_baseline(gold: GoldSet, args: argparse.Namespace, split: Split) -> int:
 
     from bfs_reg_copilot.gateway.types import GatewayError
     from bfs_reg_copilot.rag.factory import build_baseline
+    from bfs_reg_copilot.rag.pipeline import MAX_ANSWER_TOKENS
     from bfs_reg_copilot.retrieve.gold_context import gold_context_map
     from bfs_reg_copilot.store.db import connect, database_url, describe
     from bfs_reg_copilot.store.loader import counts, embedded_by_model
@@ -214,6 +226,8 @@ def _run_baseline(gold: GoldSet, args: argparse.Namespace, split: Split) -> int:
                 args.k,
                 args.prompt_version,
                 gold_context_map(gold) if args.gold_context else None,
+                False if args.no_think else None,
+                args.max_answer_tokens or MAX_ANSWER_TOKENS,
             )
             pipeline.check_ready()
         except GatewayError as exc:

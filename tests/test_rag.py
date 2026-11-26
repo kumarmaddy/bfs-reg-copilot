@@ -306,3 +306,14 @@ def test_describe_includes_the_provenance_it_was_given() -> None:
     assert info["embedding_model_digest"] == "abc123def456"
     assert info["corpus_fingerprint"] == "624:0123456789ab"
     assert info["k"] == "5"  # the existing settings are still there
+
+
+def test_answer_budget_defaults_to_512_and_can_be_raised_for_reasoning_models() -> None:
+    from bfs_reg_copilot.rag.pipeline import MAX_ANSWER_TOKENS
+
+    plain = RagPipeline(FixedRetriever([]), MemorySource(), ScriptedGateway())
+    assert plain.describe()["max_answer_tokens"] == str(MAX_ANSWER_TOKENS) == "512"
+    roomy = RagPipeline(
+        FixedRetriever([]), MemorySource(), ScriptedGateway(), max_answer_tokens=3500
+    )
+    assert roomy.describe()["max_answer_tokens"] == "3500"

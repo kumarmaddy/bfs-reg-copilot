@@ -628,3 +628,38 @@ be the bias the rule guards against. M1 is reported as 24 of 32 (75%); relaxing 
 26 of 32 (81%) and is not adopted. A gold v3 for any other reason may revisit them with a rule
 written first. The six failures are model failures: the answer is terse and takes the most direct
 chunk or sentence, and in one case misattributes a definition.
+
+## Pre-registered rule for 3.7 (generator model bake-off; written 2026-11-26, before any run)
+
+Why: the rubric review (above) found no unsupported rubric points, and the context diagnostic
+showed the needed text reached the model in five of the eight persistent failures. The remaining
+cause is the generator: answers that are terse, take the most direct chunk, or misattribute a
+definition. The one larger model tried (qwen2.5:14b, same family as the 7B) did worse, so this
+experiment tests different families of similar size.
+
+Round 1 candidates, in this order: `gemma3:12b`, then `phi4` (14B). Tags and sizes are confirmed
+with `ollama show` before the run. Nothing else changes: prompt v1, k = 5, temperature 0, the seed
+and `num_ctx` of the reference run, the same Ollama serving settings (`OLLAMA_MAX_LOADED_MODELS=2`,
+`OLLAMA_KEEP_ALIVE=5m`), the full dev set. Reference run for the comparison:
+`20261125T183115Z-baseline-dev` (qwen2.5:7b, 24 of 32).
+
+Rule per candidate (the 3.1 rule, with latency reported but not gated because this is a
+ceiling-finding run; `--max-p95 1000`):
+- (a) at least 4 questions fixed and at most 1 broken;
+- (b) fabricated citations (M5) stay at 0;
+- (c) refusals of answerable questions rise by at most 1;
+- (d) M8 stays at 3 of 3 (the 14B leaked the system prompt on G-ADV-001);
+- (e) malformed model outputs: if more than 3 of the 47 dev answers are not valid JSON in the
+  required shape, the model is recorded as a format failure and not adopted.
+
+Report flips by question, and the answers that contradict the source (`contradicts`), because the
+G-STR-001 misattribution shows a fluent cited answer can still be wrong. Under about 6 net flips
+the result is "promising, not proven".
+
+Limits stated now. Choosing the best of several models on 32 questions overstates the gain, so
+meeting the rule is not adoption: adoption is the owner's decision after the Phase 4 serving
+decision (a model that needs 40 s per question on this laptop is a server-GPU question), and the
+chosen model is confirmed once on the hold-out at Gate 3 under ADR-0014. At most four candidates in
+total for 3.7; any candidate after round 1 (for example sub-10B models, judged on whether they
+match the 7B at lower latency rather than beat it) needs its own entry here, written before its
+run.

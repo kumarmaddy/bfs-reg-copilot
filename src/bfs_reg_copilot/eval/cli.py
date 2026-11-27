@@ -170,6 +170,14 @@ def _build_parser() -> argparse.ArgumentParser:
     inject.add_argument("--guard", action="store_true", help="run behind the output guard")
     inject.add_argument("--out-dir", type=Path, default=DEFAULT_RUNS_DIR)
     inject.add_argument("--repo-root", type=Path, default=Path("."))
+    faith = sub.add_parser(
+        "faithfulness-sheet", help="export answers and their cited text for M6 labelling"
+    )
+    faith.add_argument("reference", type=Path, help="the reference run folder")
+    faith.add_argument("--other", type=Path, action="append", default=[], help="other run folders")
+    faith.add_argument(
+        "--out-dir", type=Path, default=None, help="default: <reference>/faithfulness"
+    )
     scan = sub.add_parser(
         "scan-corpus", help="read-only scan of the current chunks for instruction-like text"
     )
@@ -453,6 +461,47 @@ def _inject(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def _faithfulness_sheet(args: argparse.Namespace) -> int:
+    from contextlib import closing
+
+    from pg8000.exceptions import DatabaseError, InterfaceError
+
+    from bfs_reg_copilot.eval.faithfulness import (
+        build_rows,
+        render_context,
+        select_candidates,
+        write_sheet,
+    )
+    from bfs_reg_copilot.rag.pipeline import DbChunkSource
+    from bfs_reg_copilot.store.db import connect, database_url, describe
+
+    reference = read_run(args.reference)
+    others = [read_run(path) for path in args.other]
+    candidates = select_candidates(reference, others)
+    try:
+        conn = connect()
+    except (OSError, InterfaceError, DatabaseError) as exc:
+        print(f"ERROR cannot connect to {describe(database_url())}: {type(exc).__name__}: {exc}")
+        return EXIT_UNREADABLE
+    with closing(conn):
+        rows, context = build_rows(candidates, DbChunkSource(conn))
+    out = args.out_dir or args.reference / "faithfulness"
+    out.mkdir(parents=True, exist_ok=True)
+    write_sheet(out / "sheet.csv", rows)
+    (out / "context.md").write_text(render_context(rows, context), encoding="utf-8")
+    a = sum(r["stratum"] == "A" for r in rows)
+    flagged = sum(bool(r["numbers_not_in_cited"]) for r in rows)
+    print(f"{len(rows)} answers ({a} from the reference run, {len(rows) - a} from other runs)")
+    print(f"{flagged} have numbers that are not in the cited text")
+    missing = [r["row_id"] for r in rows if not context[r["row_id"]]]
+    if missing:
+        print(
+            f"WARNING no cited text found for {', '.join(missing)} (chunk ids not in the database)"
+        )
+    print(f"wrote {out / 'sheet.csv'} and {out / 'context.md'} (corpus text: keep out of git)")
+    return EXIT_OK
+
+
 def _scan_corpus(args: argparse.Namespace) -> int:
     from contextlib import closing
 
@@ -552,6 +601,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _inject(args)
         if args.command == "scan-corpus":
             return _scan_corpus(args)
+        if args.command == "faithfulness-sheet":
+            return _faithfulness_sheet(args)
         meta, records = read_run(args.run_dir)
         if args.command == "context":
             return _context(gold, args, records)

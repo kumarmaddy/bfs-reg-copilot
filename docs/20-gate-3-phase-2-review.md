@@ -872,3 +872,93 @@ the same rules apply to every run.
   items. The v3 number is the fairer measure of the same answers, not a better system.
 - v3 was reviewed once. If a page changes or a rule is re-opened, add a new version, do
   not edit v3.
+
+## Phase 3 summary and Gate 4 position
+
+Written 2026-11-27, after experiments 3.1 to 3.8. Phase 3's exit criterion in
+[doc 06](06-delivery-plan.md) is "M1 >= 90% and M2 >= 90% on hold-out, **or documented gap**".
+This section is the documented gap. **The hold-out has not been run**; under D-1 it runs once,
+at Gate 4, on the release candidate.
+
+### Where the targets stand
+
+Dev split, reference run `20261125T183115Z-baseline-dev` (qwen2.5:7b, dense top-5, prompt v1,
+temperature 0). M1 is shown under gold v3 (pass rules fixed in 3.8) and under v2.
+
+| Metric | Target | Dev result | Hold-out | Reading |
+|---|---|---|---|---|
+| M1 cited-answer accuracy | >= 90% | **27/32 = 84%** (95% CI 68% to 93%) under v3; 24/32 = 75% under v2 | Not run | Two questions short of the 29 needed |
+| M2 correct refusal | >= 90% | 12/12 = 100% | Not run (3 items) | Met on dev; over-refusal 1/32 |
+| M4 retrieval hit@5 | >= 90% | 30/32 = 94% | n/a | Met |
+| M5 fabricated citations | <= 1% | 0/46 | n/a | Met, but it does not catch a cited wrong answer (see M6) |
+| M8 prompt-injection resistance | 0 successes | 3/3 scored items passed; G-ADV-003 needs a fixture and is not scored | Not run (1 item) | Met on 3 of 4 dev items; RAID I-5 still open |
+| M3 p95 latency | < 10 s, deployed (Gate 5) | 16.5 s p95, 11.5 s p50, on the owner's laptop, not deployed | n/a | Not comparable; measured at Gate 5 |
+| M6, M7, M9, M10 | doc 02 | Not measured in Phase 3 | | M6 is a real gap, below |
+
+The 8 answerable hold-out items give a very coarse M1: 90% means 8 of 8, and 7 of 8 is 88%.
+Hold-out pass rules are the same in v2 and v3, so the hold-out M1 does not depend on which gold
+version is used.
+
+### What 3.1 to 3.8 established
+
+| Step | Question | Result |
+|---|---|---|
+| 3.1 | Does retrieving 8 passages instead of 5 help? | Pre-registered rule not met. Full gold coverage in the top k rises only from 27 to 28 of 32 items at k = 8 |
+| 3.2 | Does a revised prompt (v2) help? | Pre-registered rule not met |
+| 3.3 | Does a larger model from the same family (qwen2.5:14b) help? | No: 20/32, 1 fixed, 5 broken, and prompt text leaked into answers (evidence for I-5) |
+| 3.4 | Why do 8 questions fail in every version? | 2 retrieval misses (G-E21-005, G-STR-003), 1 retrieval partial (G-RBA-002: 3 of 7 gold chunks), 1 partial (G-B10-001), 4 where the text was in context and the model left out points (G-B13-001, G-CPR-004, G-E21-001, G-STR-001). Handing the generator the gold chunks fixed 3 of the 4 tested, so retrieval is not the whole story |
+| 3.5 | Does a reranker (bge-reranker-v2-m3, hybrid pool of 35) fix retrieval? | No. 25 of 32 items had every gold chunk in the top 5, against the 30 the rule required (dense alone: 27). Dropped |
+| 3.6 | Would changing ingestion or chunking help, and are the rubrics sound? | Chunking changes would help 0 to 1 question and force a new gold set. The key points of the six items reviewed were all supported by the source; the grades of the five failing reference answers were confirmed |
+| 3.7 | Does a different generator at 9 to 14 billion parameters help? | No. Seven variants run; one (qwen3:14b, thinking off) survived the automatic screen and then fixed 3 and broke 1 (rule needs 4 fixed). Thinking cost 2.4 to 3 times the run time and did not reduce refusals of answerable questions |
+| 3.8 | Are the pass rules fair to the questions? | Six rules required more than the question asked; changed in gold v3. Reference M1 went from 75% to 84%; the same change narrowed qwen3:14b's advantage, so the verdict on it is unchanged |
+
+Verdicts for 3.1 to 3.3 were reached under v2 and were not re-scored under v3.
+
+### What the evidence says
+
+1. **Retrieval is not the main limit.** Dense top-5 already holds every gold chunk for 27 of 32
+   questions, and neither more passages, hybrid search nor a reranker reached the bar.
+2. **The generator is the lever, and no tested generator was better.** Other models fixed some
+   questions, broke others, answered more slowly, and mostly refused more answerable questions.
+3. **Part of the gap was the measurement.** Six pass rules asked for more than their question
+   did. With that corrected (v3), the reference sits at 84%, not 75%.
+4. **What remains is small and specific.** Against 29 of 32, the reference still fails
+   G-STR-001 (wrong content), G-B13-001, G-E21-005, G-RBA-002 and G-STR-003.
+5. **A cited answer can still be wrong.** The reference answer to G-STR-001 swapped the
+   definitions of "suspect" and "believe" and cited the right section. M1 caught it by human
+   grading; M5 cannot, and M6 is not measured. This is the strongest reason to build M6.
+6. **No measure of latency applies to the target yet.** The laptop p95 (16.5 s) is above the
+   deployed target (10 s); the deployed number is a Gate 5 measurement on different hardware.
+
+### Remaining Phase 3 work against the plan
+
+| Plan item (doc 06) | State | Proposed |
+|---|---|---|
+| Hybrid retrieval | Built and tuned; off by default (dense won on dev) | Done |
+| Reranker | Tried, dropped (3.5) | Done |
+| Abstention threshold and guardrails (block uncited answers, refusal floor, injection scanning; RAID I-5) | Not built | **Do before the release candidate**: they change refusal and uncited behaviour, so they move M2 and M8 |
+| Faithfulness (M6) with a checked judge model | Not built | **Do before the release candidate** (85% agreement with human labels on 30 items, per doc 02) |
+| Optional fine-tuning (QLoRA) | Not started | **Cut first**, per the plan's cut order. The remaining dev gap is two questions, which does not justify the cost and risk |
+| Pack C (US eCFR) | Not started | Third in the cut order; owner decides after guardrails and M6 |
+
+### Decisions for the owner
+
+| # | Decision | Recommendation | State |
+|---|---|---|---|
+| D-5 | **Generator for the release candidate** | Keep qwen2.5:7b, prompt v1, dense top-5. No tested alternative met its rule | Open |
+| D-6 | **Which M1 is the headline at Gate 4** | Report gold v3 as the headline and v2 beside it, both for dev. The hold-out figure is the same under both | Open |
+| D-7 | **When the hold-out is run** | Once, after guardrails and M6 are built and the release candidate is frozen. Running it now would spend the single look on a candidate known to be unfinished | Open |
+| D-8 | **Stop experiments aimed at M1?** | Yes for now: the remaining gap is 2 questions, and 3.1 to 3.7 found no lever. Record 84% against 90% as the gap unless the hold-out says otherwise. If more resolution is wanted, enlarge the dev set with new items written from the primary text before running them | Open |
+| D-9 | **Models other than qwen2.5:7b** | Experiment only. Their licence terms and model-risk review are `[to verify]` and are not done; none may be deployed on this evidence | Open |
+
+### Still to do (not experiments)
+
+- Record in RAID: the 14B prompt leak and the lack of one in qwen3:14b's 47 answers (I-5), and
+  the open items below. Move the status of documents 12 to 21 out of Draft if that is the convention.
+- Explain why `grade-sheet` left G-E21-005 off the sheet although the answer was not a refusal.
+- Make the "not clean" message in `scripts/bakeoff.ps1` say why (it printed a blank reason).
+- Decide whether to re-score 3.1 to 3.3 under gold v3.
+- Back up `eval/runs/` (untracked). Keep `context-report.md` and `rubric-review.md` out of git:
+  they hold corpus text.
+- Any change to chunking later would invalidate chunk ids in the gold set; that would need a
+  further gold version.

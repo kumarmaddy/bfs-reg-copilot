@@ -1207,3 +1207,75 @@ human-labelled on this sample.
 one answer is more than 3 percentage points. The numbers check cannot see numbers written as
 words or dates in other formats. The label is about the cited text and says nothing about whether
 the answer is complete.
+
+## Experiment 3.10a result: M6 faithfulness (provisional)
+
+**M6 on the reference dev run: 23 of 31 answers supported by their cited text = 74.2%
+(doc 02 target 90 percent).** This is provisional; read the status below before using it.
+
+| Measure | Result |
+|---|---|
+| Stratum A (reference run), supported | 23/31 = 74.2% |
+| Same, if the 3 low or medium confidence calls were all `supported` | 26/31 = 83.9% |
+| Stratum B (other runs), supported | 9/9 |
+| Answers labelled unsupported, both strata | 8 of 40 |
+
+Even on the most favourable reading of the borderline rows, M6 is below 90 percent. The result is a
+**documented gap**, the same status as M1.
+
+### Status of the labels (a deviation from the rule above, accepted by the owner on 2026-11-27)
+
+- The owner did not label the rows independently. All 40 labels are the assistant's
+  pre-labels, read and accepted by the owner. The owner stated that their own labels would have been
+  the same.
+- The blind step (the owner labelling the 15 marked rows before seeing the pre-labels) was not done,
+  so there is no measure of anchoring. Zero pre-labels were changed.
+- The 48-hour self-consistency re-label was skipped by the owner's decision for now.
+- Consequence: these are an assistant's labels endorsed by one person, not independent human labels.
+  Doc 02 treats human labels as the reference. M6 is therefore reported as provisional, and the
+  judge test in the rule is **not run**: checking a judge against labels that came from a model
+  would be circular. Open item: an independent owner review of at least the 15 marked rows and the
+  8 unsupported rows before M6 is quoted outside this project.
+
+### Unsupported answers (reference run)
+
+| Row | Item | Why |
+|---|---|---|
+| F-05 | G-B10-006 | multi-cloud design is a resilience strategy in the source, not a way to ensure portability |
+| F-12 | G-CPR-003 | affiliate-risk factor is conditional in the source; answer states it generally |
+| F-13 | G-CPR-004 | 'at least every 2 years' is not in the cited chunk (it says 'two-year review') |
+| F-17 | G-E21-005 | no cited chunk says E-21 points to B-10 and B-13; E-21 chunk is metadata only |
+| F-20 | G-E23-004 | definition of model risk is not in the cited chunks |
+| F-24 | G-RBA-002 | the six steps listed are not the steps in the cited chunks |
+| F-26 | G-RBA-004 | 'consider setting a lower risk tolerance' is not in the cited text |
+| F-28 | G-STR-001 | swaps the thresholds: believe-level wording applied to suspect |
+
+By kind: invented content (F-20, F-24, F-26), swapped meaning (F-28), wrong direction of a
+cross-reference (F-17), a dropped condition (F-12), and wording that goes slightly beyond the text
+(F-05, F-13).
+
+### Reading
+
+- **M1 and M6 measure different things.** 5 of the 8 unsupported answers
+  (G-B10-006, G-CPR-003, G-CPR-004, G-E23-004, G-RBA-004) passed M1, because the pass rule counts
+  key points present and does not penalise a wrong sentence added beside them. Conversely G-B13-001
+  fails M1 and is faithful: it is thin, not wrong.
+- **A citation does not prove a claim.** In every unsupported answer a real chunk is cited, so M5
+  (no fabricated citations) is clean while M6 is not. This is the gap this metric was added to show.
+- **The numbers check is not a useful guard.** It flagged 3 answers; all 3 are
+  document names (B-10, E-21, E-23), not figures. Of the 8 unsupported answers, 7
+  were not flagged, and the 1 that was flagged is unsupported for a different reason. It
+  stays an aid for the labeller and is not proposed as a runtime guard.
+- **Risk for this domain.** A confident, cited, wrong answer on a regulatory threshold (F-28) is the
+  failure a banking reviewer cares about most. The output guard cannot see it.
+- **Not done here, and not claimed:** any change to the prompt or the model to raise M6. D-8 stopped
+  M1-chasing experiments; whether to open a faithfulness experiment is a separate decision with its own
+  pre-registered rule.
+- **Limits.** One labeller, endorsed rather than independent; 31 answers, so one answer is
+  3.2 points; dev set only; M6 here is stricter than doc 02's wording (cited text, not all
+  retrieved text), so some unsupported answers might be supported by an uncited retrieved chunk.
+
+### Decisions this record needs from the owner
+
+1. Accept M6 as a documented gap alongside M1 for Gate 4, or open a faithfulness experiment first.
+2. Decide when the independent review of the labels happens.

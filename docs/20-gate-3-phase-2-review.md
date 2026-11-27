@@ -790,3 +790,85 @@ diagnosed in 3.4, and the larger models mostly traded wrong answers for
 refusals. The remaining distance to the 90% target is a decision for the owner
 (target, rubric strictness or accepting the gap with the evidence recorded),
 not a tuning gap this experiment can close.
+
+## Gold v3: rubric review
+
+**Decision (owner, 2026-11-27):** a pass rule should require only what its question
+asks. A model cannot be expected to state every point the source makes on a topic when
+the question asks for less, so a rule that demands them measures recall of the page, not
+whether the question was answered. The same idea was applied in v2 (G-B10-002,
+G-E23-001). This section records how it was applied, what changed, and what did not.
+
+### How it was applied
+
+- All 40 answerable items were reviewed against their question wording: 32 dev and 8
+  hold-out. The review looked at what each question asks, not at any model's answer.
+- Four checks: (1) the rule requires nothing the question does not ask for; (2) items of
+  the same type are treated alike (comparison questions require the two things compared,
+  as G-E23-004 and G-STR-001 already did); (3) the N-of-M thresholds on list questions
+  stay, because they are already the allowance for a partial list; (4) a rule is never
+  changed for a single answer.
+- Key points keep their numbers and counts. Only the pass rule changed, and on three
+  items (G-CPR-004, G-RBA-003, G-STR-004) the wording of some key points. Questions, supporting chunks, splits and the hold-out
+  are identical to v2 (`eval/gold/gold-v3.yaml`; v1 and v2 are kept).
+- Both M1 figures are reported below. The 90% target (29 of 32) was set under v2 and is
+  unchanged.
+
+### What changed (six dev items)
+
+| Item | v2 required | v3 requires | Why |
+|---|---|---|---|
+| G-E21-001 | all 3 points | points 1 and 2 | The question asks for the difference; point 3 (how they relate) is context. Matches G-E23-004 and G-STR-001. |
+| G-B10-001 | all 3 points | point 2, plus point 1 or point 3 | "What counts" can be answered by the general definition or by three named kinds; the exclusions are always required. |
+| G-CPR-004 | 3 of 4, including the 30 days | points 1 and 3 | The question asks how often and to whom. The 24-month start rule, the 30 days and the report contents are accurate but not asked. A wrong figure for any of them still fails as a contradiction. |
+| G-RBA-003 | all 2 points, point 1 included what tolerance takes into account | all 2 points, point 1 is the definition | The question asks what it is, not what it considers. |
+| G-STR-003 | points 1 and 2 | point 1 | The question asks whether the client may be told; point 1 answers it, with its intent qualifier. |
+| G-STR-004 | all 2 points, point 1 included an explanation of the change | all 2 points, point 1 without it | The question asks whether it can be changed and by when. |
+
+### What was considered and not changed
+
+- **G-B13-001** ("who holds responsibility"): kept at 2 of 3. "Senior officers" with no
+  role named does not say who. If it were relaxed to 1 point, the reference would gain one
+  more pass (28/32) and still fall short of 29; the comparison below would not change its
+  verdict.
+- **G-B10-006** and the other list questions: N-of-M recall thresholds stay.
+- **Multi-hop items** (G-E21-005, G-RBA-002): their thresholds follow the question.
+- **The 8 hold-out items**: reviewed, no change needed. The hold-out stays sealed.
+
+### Where the changes came from, stated plainly
+
+G-B10-001 and G-CPR-004 were identified in 3.6, before any 3.7 run, as strict against
+their question's scope. G-RBA-003 and G-STR-004 were noticed while grading the 3.7
+survivor. G-E21-001 comes from the consistency check. G-STR-003 changes no recorded
+result (both runs refused it). The principle was decided by the owner after seeing
+results, which is why the review covered every item, why both scores are shown, and why
+the same rules apply to every run.
+
+### Effect on the recorded runs (re-scored without re-running any model)
+
+| Run | M1 under v2 | M1 under v3 |
+|---|---|---|
+| Reference, qwen2.5:7b | 24/32 = 75% (95% CI 58% to 87%) | 27/32 = 84% (95% CI 68% to 93%) |
+| qwen3:14b, thinking off | 26/32 = 81% (95% CI 65% to 91%) | 28/32 = 88% (95% CI 72% to 95%) |
+
+- The reference gains three (G-E21-001, G-B10-001, G-CPR-004). qwen3:14b gains two
+  (G-B10-001 and G-CPR-004; G-E21-001 already passed). One grade was re-graded:
+  G-CPR-004 for qwen3:14b (`regrade_v3.py`: "every two years" states the point 1 wording
+  that v3 isolates). No other grade changed.
+- The `eval flips` comparison under v3: 26 pass in both, 3 fail in both; fixed
+  G-B13-001 and G-STR-001, broken G-B10-006 (2 fixed, 1 broken). The rule needs at least
+  4 fixed. **Still not adopted**, and the case for the larger model is weaker under v3,
+  because one of its three earlier "fixes" (G-E21-001) was a rubric effect.
+- The reference stays below the target under v3: 27/32 against 29/32. What still fails:
+  G-STR-001 (wrong answer), G-B13-001 (rubric kept), G-E21-005, G-RBA-002, G-STR-003.
+- Verdicts of experiments 3.1 to 3.3 were reached under v2 and stand as recorded. They
+  were not re-scored under v3.
+
+### Limits
+
+- The labels are still not independent (R-17): the owner decided the principle and the
+  assistant applied it. The change log in `12-gold-set.md` records v3.
+- Thirty-two dev questions are few; 84% against 75% is within the noise of one or two
+  items. The v3 number is the fairer measure of the same answers, not a better system.
+- v3 was reviewed once. If a page changes or a rule is re-opened, add a new version, do
+  not edit v3.

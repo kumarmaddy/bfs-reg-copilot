@@ -1331,3 +1331,70 @@ chance, which is why the rule asks for per-answer movement and a margin and not 
 The hold-out has 8 answerable items and cannot measure faithfulness, so the claim afterwards is
 "reduced on dev", never "solved". A stricter prompt can raise refusals; condition 4 is there for
 that.
+
+## Experiment 3.11 result: faithfulness prompt (v3)
+
+**Verdict under the pre-registered rule: v3 is not adopted. Prompt v1 stays the release-candidate
+prompt, and the M6 gap is final for this phase.** Run `20261127T155708Z-baseline-dev` (prompt v3,
+qwen2.5:7b, dense top-5, dev, guard off, one attempt). The rule needed all five conditions; two
+fail, and one failure is enough.
+
+| # | Condition | Result | Met |
+|---|---|---|---|
+| 1 | At least 3 of the 8 unsupported reference answers become supported | 2 of 8 (G-CPR-003, G-CPR-004) | **no** |
+| 2 | None of the 23 supported answers becomes unsupported | 0 broken | yes |
+| 3 | M1 under gold v3 at least 26/32, at most 1 broken | not graded (see below) | not needed |
+| 4 | Over-refusal rises by at most 1; M2 12/12; M5 0; M8 3/3 | over-refusal 1/32 (same), M2 12/12, M5 0/47; M8 not graded | yes |
+| 5 | p95 at most 19.0 s | 24.53 s (median 12.76 s vs 11.53 s) | **no** |
+
+M1 grading of the 30 ungraded answers was not done: condition 1 had already failed, so the grades
+could not change the verdict. The run is kept, and can be graded later if wanted.
+
+**M6, provisional labels (same procedure and limits as 3.10a).**
+
+| | Reference (v1) | v3 |
+|---|---|---|
+| Supported among answers given | 23/31 = 74.2% | 25/31 = 80.6% |
+| Supported over all 32 answerable items | 23/32 = 71.9% | 25/32 = 78.1% |
+
+The 8 answers that were unsupported under v1:
+
+| Item (row in the v1 sheet) | Under v3 |
+|---|---|
+| G-B10-006 | still unsupported |
+| G-CPR-003 | fixed |
+| G-CPR-004 | fixed |
+| G-E21-005 | still unsupported |
+| G-E23-004 | still unsupported |
+| G-RBA-002 | still unsupported |
+| G-RBA-004 | still unsupported |
+| G-STR-001 | still unsupported |
+
+### Reading
+
+- **A small gain for a specific reason.** The two that were fixed (G-CPR-003, G-CPR-004) were fixed
+  because v3 copied the source more closely: the affiliate-risk condition was kept, and a second
+  chunk carrying "at a minimum" was cited. That is a better habit, but it only helps when the
+  needed text is in the context and the question asks for a list.
+- **The remaining six share a cause a prompt cannot remove.** In G-E23-004, G-RBA-002 and
+  G-E21-005 the text that answers the question is not among the cited chunks (the model-risk
+  definition, the six step headings together, the E-21 key-areas section). Told to use only the
+  sources, the model still reaches for outside knowledge or stitches fragments together. The fix
+  belongs in retrieval or chunking, or in an answer that says "the sources provided do not cover
+  this", not in the instruction.
+- **Two answers got worse.** G-STR-001 now also says reasonable grounds to suspect requires verified
+  facts, which the source contradicts, and G-RBA-004 invents "consider setting a high risk
+  tolerance". A stricter instruction did not stop the model confusing neighbouring terms.
+- **Cost.** The median rose from 11.53 s to 12.76 s and p95 from 16.5 s to 24.5 s on this run. The
+  cause was not investigated and the run was not repeated, because a repeat could not rescue
+  condition 1.
+- **Decision.** One attempt was the rule, so the v3 wording is not edited and no second prompt is
+  tried. The v1 reference stays, M6 stays a documented gap beside M1, and both are carried into
+  Gate 4 as known limits.
+
+### Possible later work (not started, needs its own rule)
+
+- Check whether the three "text not in context" answers are retrieval gaps (the needed chunk was
+  not retrieved) or chunking gaps, using the existing retrieval tools on dev only.
+- A different answer style that quotes the source (extractive) for list questions.
+- Having the answer say "the sources provided do not cover X" for the part it cannot support.

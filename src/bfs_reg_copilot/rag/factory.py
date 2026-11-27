@@ -7,6 +7,7 @@ from collections.abc import Mapping, Sequence
 from bfs_reg_copilot.embed.models import BGE_M3
 from bfs_reg_copilot.embed.ollama import OllamaEmbedder
 from bfs_reg_copilot.gateway.ollama import OllamaGateway
+from bfs_reg_copilot.rag.guard import GuardedPipeline
 from bfs_reg_copilot.rag.pipeline import MAX_ANSWER_TOKENS, DbChunkSource, RagPipeline
 from bfs_reg_copilot.rag.prompt import PROMPT_VERSION
 from bfs_reg_copilot.retrieve.gold_context import GoldContextRetriever
@@ -26,7 +27,8 @@ def build_baseline(
     gold_context: Mapping[str, Sequence[str]] | None = None,
     think: bool | None = None,
     max_answer_tokens: int = MAX_ANSWER_TOKENS,
-) -> RagPipeline:
+    guard: bool = False,
+) -> RagPipeline | GuardedPipeline:
     embedder = OllamaEmbedder(BGE_M3)
     retriever: Retriever = DenseRetriever(conn, embedder)
     if gold_context is not None:  # ceiling probe only; named in the run's settings
@@ -37,7 +39,7 @@ def build_baseline(
         "embedding_model_digest": embedder.model_digest(),
         "corpus_fingerprint": corpus_fingerprint(conn),
     }
-    return RagPipeline(
+    pipeline = RagPipeline(
         retriever,
         DbChunkSource(conn),
         OllamaGateway(model, think=think),
@@ -46,3 +48,4 @@ def build_baseline(
         prompt_version,
         max_answer_tokens,
     )
+    return GuardedPipeline(pipeline) if guard else pipeline

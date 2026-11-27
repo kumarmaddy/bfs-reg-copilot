@@ -126,3 +126,34 @@ uv run python -m bfs_reg_copilot.retrieve ranks --rerank
 
 The last lines state whether the Stage 1 rule of doc 20 is met. Passages longer than 6000
 characters are cut to fit the server batch; the count is printed.
+
+## A guarded run (3.9a)
+
+The output guard is off unless asked for, so the reference run is unchanged. To measure it, run the
+same command with `--guard`; the run's settings record `guard: v1` and the run prints how many
+answers were withheld and why. The score report shows the same count.
+
+```powershell
+uv run python -m bfs_reg_copilot.eval run --pipeline baseline --split dev --guard
+```
+
+Leave `--gold` at its default (v2). The reference run used that file, and `flips` refuses to
+compare two runs recorded under different gold files.
+
+Then carry the reference grades over (every answer should be identical, so 0 are left to grade)
+and compare with the rule from doc 20, which for the guard asks for no flips either way:
+
+```powershell
+$ref = "eval\runs\20261125T183115Z-baseline-dev"
+$new = "<the guarded run folder>"
+uv run python -m bfs_reg_copilot.eval grade-sheet $new --carry-from $ref --carry-grades "$ref\grades.csv"
+uv run python -m bfs_reg_copilot.eval --gold eval\gold\gold-v3.yaml flips $ref $new `
+  --grades-before "$ref\grades.csv" --grades-after "$new\grades.csv" `
+  --min-fixed 0 --max-broken 0 --max-p95 19.0
+```
+
+To see what the guard would do to answers you already have, without running a model:
+
+```powershell
+uv run python replay_guard.py <run folder> [<run folder> ...]
+```

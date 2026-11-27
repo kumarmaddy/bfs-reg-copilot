@@ -1160,3 +1160,50 @@ instruction-like patterns. A match is a lead for the owner to read, not a verdic
 matches the owner judges to be ordinary regulatory wording, passes. Text that is a genuine
 instruction aimed at a model is a finding: the source is quarantined and the ingest path reviewed
 before any further run.
+
+## Guardrails: plan and pre-registered rule for 3.10a (M6 faithfulness labels)
+
+Written before any label exists. Dev answers only; the hold-out is not used.
+
+**What M6 measures here.** Whether every claim in a non-refused answer is stated by the text the
+answer cites. Doc 02 words M6 as "supported by the retrieved context". This record uses the
+cited text instead, which is stricter: a claim that only an uncited retrieved chunk supports
+counts as unsupported. The reason is that a reader checks an answer against its citations, and a
+citation that does not support the sentence is the failure a reviewer would find. The wording
+change is recorded in the doc 02 change log when the owner accepts this record.
+
+**Sample.** Stratum A: every non-refused, cited answer in the reference dev run
+(`20261125T183115Z-baseline-dev`), about 31. Stratum B: up to 9 answers from the other stored dev
+runs that differ from the reference answer to the same item, picked in a fixed hash order so no
+item is favoured. Stratum B exists because a sample of only good answers cannot tell a good judge
+from a bad one. Total about 40, above the 30 that doc 02 requires. The M6 headline uses stratum A
+only; stratum B is used only to test a judge.
+
+**Labels.** `supported` or `unsupported`, per row, with a note naming the unsupported claim. The
+owner's labels are the reference (doc 02). The assistant prepares pre-labels in a separate file as
+a reading aid. They never count as labels. To limit anchoring:
+1. The 15 rows marked `relabel_after_48h` are labelled by the owner BEFORE opening the assistant's
+   file.
+2. The assistant's labels are compared with the owner's afterwards, and every change the owner
+   makes to a pre-label is counted and reported.
+3. After 48 hours the owner labels those 15 rows again (doc 02 self-consistency). If the owner
+   agrees with their own earlier labels on fewer than 90 percent of them, the labels are treated
+   as noisy and the result says so.
+
+**Reported.** M6 on stratum A (share `supported`, with the counts), against the doc 02 target of
+90 percent. The unsupported answers by item. A cross-tab of the numbers-and-dates flag against the
+labels: how many flagged answers were unsupported, and how many unsupported answers were not
+flagged. That shows whether the cheap deterministic check is worth keeping as a guard.
+
+**Judge rule (for 3.10b, fixed now).** A language-model judge from a different family than the
+generator is accepted to scale M6 only if, against the owner's labels on all rows, it agrees on at
+least 85 percent (doc 02) AND finds at least 70 percent of the unsupported rows, and there are at
+least 5 unsupported rows to test it on. The recall condition is an addition to doc 02: with few
+unsupported answers, agreement alone is easy to reach by calling everything supported. If the
+conditions are not met, or there are fewer than 5 unsupported rows, no judge is used and M6 stays
+human-labelled on this sample.
+
+**Limits stated in advance.** One labeller. About 31 answers, so the M6 figure has a wide margin:
+one answer is more than 3 percentage points. The numbers check cannot see numbers written as
+words or dates in other formats. The label is about the cited text and says nothing about whether
+the answer is complete.

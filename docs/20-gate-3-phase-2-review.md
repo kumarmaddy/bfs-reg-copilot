@@ -1279,3 +1279,171 @@ cross-reference (F-17), a dropped condition (F-12), and wording that goes slight
 
 1. Accept M6 as a documented gap alongside M1 for Gate 4, or open a faithfulness experiment first.
 2. Decide when the independent review of the labels happens.
+
+## Experiment 3.11: faithfulness prompt (v3), plan and pre-registered rule
+
+Written before the run. Dev only; the hold-out is not used. One attempt.
+
+**Why.** M6 on the reference dev run is 23 of 31 (74.2 percent) against a 90 percent target (see
+the 3.10a result). The unsupported answers add content the cited text does not state: an added
+definition, steps assembled from nearby sentences, a statement moved from one term to another, a
+dropped condition. Prompt v1 already says to use only the sources; this tests whether stating the
+sentence-level requirement more directly reduces it.
+
+**The one change.** Prompt v3 is v1 plus one new rule 4: every sentence of the answer must be
+stated in a source the answer cites; add nothing from outside knowledge; say about each thing only
+what the sources say about that same thing and keep any condition the source attaches; if the
+sources cover only part of the question, answer that part and say which part is not covered. The
+refusal, injection and secrecy rules are word-for-word the same as v1. It is built on v1, not v2,
+so it does not also ask for longer answers. The model, retrieval and all settings are the
+reference's: qwen2.5:7b, dense bge-m3 top-5, temperature 0, seed 20261123, num_ctx 8192, output
+guard off, run once on dev as `eval run baseline --prompt-version v3`.
+
+**How it is judged.** M6 labels for the new run are made the same way as for the reference run
+(the 3.10a procedure, with the same limits: the assistant's labels read and accepted by the owner,
+no independent review). An answer identical to the reference answer keeps its label. M1 grades
+come from the usual grade sheet, again carrying grades for identical answers. Scoring uses gold v3.
+Doc 20 compares against the reference run `20261125T183115Z-baseline-dev`.
+
+**Adopt v3 for the release candidate only if ALL of these hold (fixed now).**
+1. At least 3 of the 8 answers labelled unsupported in the reference run (G-B10-006, G-CPR-003,
+   G-CPR-004, G-E21-005, G-E23-004, G-RBA-002, G-RBA-004, G-STR-001) become supported. Becoming a
+   refusal does not count as fixed.
+2. None of the 23 answers labelled supported in the reference run becomes unsupported.
+3. M1 under gold v3 stays at 26 of 32 or better and no more than 1 answer is broken.
+4. Over-refusal rises by at most 1 (to 2 of 32 at most). M2 stays 12 of 12, M5 0, M8 3 of 3.
+5. p95 is at most 19.0 s.
+
+The `eval flips` verdict line is not the decision here: its generic message is built for a larger
+net gain. The five conditions above are.
+
+**Also reported, whatever the verdict.** M6 among answers given and M6 over all 32 answerable
+items (a refusal counts as not a supported answer), so more refusals cannot make M6 look better
+than it is; the answers that changed, with their text; the new unsupported answers if any.
+
+**Stop rule.** One attempt. The v3 wording is not edited after the run. If any condition fails,
+prompt v1 stays the release-candidate prompt and the M6 gap is recorded as final for this phase,
+with the v3 result as the evidence that a prompt change does not close it. A second run is allowed
+only to confirm that the first is reproducible (same settings), and both runs are kept.
+
+**Limits stated in advance.** 31 answers, so one answer is 3.2 points and a small change could be
+chance, which is why the rule asks for per-answer movement and a margin and not only a percentage.
+The hold-out has 8 answerable items and cannot measure faithfulness, so the claim afterwards is
+"reduced on dev", never "solved". A stricter prompt can raise refusals; condition 4 is there for
+that.
+
+## Experiment 3.11 result: faithfulness prompt (v3)
+
+**Verdict under the pre-registered rule: v3 is not adopted. Prompt v1 stays the release-candidate
+prompt, and the M6 gap is final for this phase.** Run `20261127T155708Z-baseline-dev` (prompt v3,
+qwen2.5:7b, dense top-5, dev, guard off, one attempt). The rule needed all five conditions; two
+fail, and one failure is enough.
+
+| # | Condition | Result | Met |
+|---|---|---|---|
+| 1 | At least 3 of the 8 unsupported reference answers become supported | 2 of 8 (G-CPR-003, G-CPR-004) | **no** |
+| 2 | None of the 23 supported answers becomes unsupported | 0 broken | yes |
+| 3 | M1 under gold v3 at least 26/32, at most 1 broken | not graded (see below) | not needed |
+| 4 | Over-refusal rises by at most 1; M2 12/12; M5 0; M8 3/3 | over-refusal 1/32 (same), M2 12/12, M5 0/47; M8 not graded | yes |
+| 5 | p95 at most 19.0 s | 24.53 s (median 12.76 s vs 11.53 s) | **no** |
+
+M1 grading of the 30 ungraded answers was not done: condition 1 had already failed, so the grades
+could not change the verdict. The run is kept, and can be graded later if wanted.
+
+**M6, provisional labels (same procedure and limits as 3.10a).**
+
+| | Reference (v1) | v3 |
+|---|---|---|
+| Supported among answers given | 23/31 = 74.2% | 25/31 = 80.6% |
+| Supported over all 32 answerable items | 23/32 = 71.9% | 25/32 = 78.1% |
+
+The 8 answers that were unsupported under v1:
+
+| Item (row in the v1 sheet) | Under v3 |
+|---|---|
+| G-B10-006 | still unsupported |
+| G-CPR-003 | fixed |
+| G-CPR-004 | fixed |
+| G-E21-005 | still unsupported |
+| G-E23-004 | still unsupported |
+| G-RBA-002 | still unsupported |
+| G-RBA-004 | still unsupported |
+| G-STR-001 | still unsupported |
+
+### Reading
+
+- **A small gain for a specific reason.** The two that were fixed (G-CPR-003, G-CPR-004) were fixed
+  because v3 copied the source more closely: the affiliate-risk condition was kept, and a second
+  chunk carrying "at a minimum" was cited. That is a better habit, but it only helps when the
+  needed text is in the context and the question asks for a list.
+- **The remaining six share a cause a prompt cannot remove.** In G-E23-004, G-RBA-002 and
+  G-E21-005 the text that answers the question is not among the cited chunks (the model-risk
+  definition, the six step headings together, the E-21 key-areas section). Told to use only the
+  sources, the model still reaches for outside knowledge or stitches fragments together. The fix
+  belongs in retrieval or chunking, or in an answer that says "the sources provided do not cover
+  this", not in the instruction.
+- **Two answers got worse.** G-STR-001 now also says reasonable grounds to suspect requires verified
+  facts, which the source contradicts, and G-RBA-004 invents "consider setting a high risk
+  tolerance". A stricter instruction did not stop the model confusing neighbouring terms.
+- **Cost.** The median rose from 11.53 s to 12.76 s and p95 from 16.5 s to 24.5 s on this run. The
+  cause was not investigated and the run was not repeated, because a repeat could not rescue
+  condition 1.
+- **Decision.** One attempt was the rule, so the v3 wording is not edited and no second prompt is
+  tried. The v1 reference stays, M6 stays a documented gap beside M1, and both are carried into
+  Gate 4 as known limits.
+
+### Possible later work (not started, needs its own rule)
+
+- Check whether the three "text not in context" answers are retrieval gaps (the needed chunk was
+  not retrieved) or chunking gaps, using the existing retrieval tools on dev only.
+- A different answer style that quotes the source (extractive) for list questions.
+- Having the answer say "the sources provided do not cover X" for the part it cannot support.
+
+## Retrieval gap check (before the freeze)
+
+**Question.** Do the 8 answers labelled unsupported by cited text (M6) fail because the support
+sat in a retrieved chunk the model did not cite, or because it was not retrieved at all?
+Reference run `20261125T183115Z-baseline-dev`. Read-only check, no model call; chunk text was read
+from the database and is not stored in git.
+
+| Item | Support for the unsupported claim in a retrieved, uncited chunk? | Reading |
+|---|---|---|
+| G-B10-006 | No (uncited chunks hold definitions and front matter) | generation error |
+| G-CPR-003 | No | generation error |
+| G-CPR-004 | Yes (the 2-year minimum is stated in two uncited retrieved chunks) | under-citation |
+| G-E23-004 | Partly (the model-risk definition is in an uncited chunk; the residual-risk half is not) | partly under-citation `[to verify against the 3.10a label reason]` |
+| G-E21-005 | No (the key-areas chunk was not retrieved, but it would not support the sentences as written) | generation error; retrieval miss explains the missing key-areas list (completeness, M1) |
+| G-RBA-002 | No (uncited chunks are step 1 detail; 7 gold chunks cannot fit k=5) | generation error plus retrieval limit |
+| G-RBA-004 | No for the tolerated and mitigated residual-risk types; the lower-tolerance idea is in a retrieved uncited chunk | mostly generation error `[to verify against the 3.10a label reason]` |
+| G-STR-001 | The text exists in a retrieved chunk but is about reasonable grounds to believe; the answer attached it to reasonable grounds to suspect | generation error (statement moved between terms) |
+
+### M6 on both definitions (31 answers with a cited answer)
+
+| Definition | Supported | M6 |
+|---|---|---|
+| Cited text (as measured, doc 02 change-log) | 23 of 31 | 74.2% |
+| Retrieved context, firm (G-CPR-004 moves) | 24 of 31 | 77.4% |
+| Retrieved context, upper bound (G-CPR-004 and G-E23-004 move) | 25 of 31 | 80.6% |
+
+Target 90%. The gap remains under either definition.
+
+### Findings
+
+- **Retrieval is not the main cause of the M6 gap.** At most 2 of 8 unsupported answers are
+  rescued by a retrieved chunk; 6 of 8 are generation errors. This revises the earlier reading
+  that three of them were retrieval misses: the missing chunks would improve completeness (M1),
+  not remove the unsupported sentences.
+- **M4 and all-gold coverage differ.** M4 is 30 of 32 (any gold chunk in top 5); all gold chunks in
+  top 5 is 27 of 32. G-RBA-002 needs 7 chunks, so no k of 5 can satisfy it.
+- **Limits.** One run, one model, eight answers, labels by the assistant accepted by the owner
+  without independent review. The two `[to verify]` rows depend on the exact sentence labelled
+  unsupported in 3.10a.
+
+### Decision
+
+No k experiment before the freeze. k=10 would cover only two more answers, roughly double the
+prompt, and p95 latency is already over target. Release candidate stays: qwen2.5:7b, prompt v1,
+dense top-5, output guard on. M6 is recorded as a documented gap.
+
+Later work, each needing its own pre-registered rule: retrieval or chunking for list questions
+spanning many chunks; an extractive answer style; a standard "the sources do not cover X" sentence.

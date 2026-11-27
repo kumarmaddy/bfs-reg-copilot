@@ -963,6 +963,42 @@ Verdicts for 3.1 to 3.3 were reached under v2 and were not re-scored under v3.
 - Any change to chunking later would invalidate chunk ids in the gold set; that would need a
   further gold version.
 
+## Experiment 3.9a result: output guard
+
+**Verdict: the rule is met. The guard costs nothing measurable on dev and is eligible for the
+release candidate.** Run `20261127T055253Z-baseline-dev` (commit dc29f76, `--guard`, gold v2,
+otherwise the reference configuration) against the reference `20261125T183115Z-baseline-dev`.
+
+| Rule condition | Result |
+|---|---|
+| (a) 0 fixed, 0 broken; every answer identical so grades carry | 27 pass in both, 5 fail in both; 33 of 33 grades carried, 0 left for a person |
+| (b) M2 12/12, over-refusal 1/32, M5 0, M8 3/3 | 12/12, 1/32, 0 of 46 citations, 3/3 |
+| (c) p95 at most 19.0 s | 18.95 s (reference 16.49 s; p50 11.53 s in both) |
+| (d) guard count reported; expected 0 | `guard withheld 0 answers (uncited 0, instruction leak 0)`; malformed 0, errors 0 |
+| (e) ruff, format, mypy, tests | Passed at commit (415 passed, 33 skipped in the assistant's sandbox) |
+
+M1 is unchanged at 27/32 = 84% under gold v3.
+
+### Reading
+
+- **p95 passed narrowly, and the guard is not the cause.** The guard takes about 10 microseconds
+  per answer (measured on the 47 reference answers) against a model call of about 11 seconds. The
+  median is identical to the reference; only the slowest answers were slower, which is what a
+  restarted machine or a background task does. The 1.15 times limit was met, so the run was not
+  repeated, but the margin is thin and should not be read as a latency finding.
+- **The flips tool printed "promising, not proven".** That is its generic message when the net
+  gain is under 6. This rule asks for no gain, so the message does not apply; the four conditions
+  above are the verdict.
+- **What the run does not show.** The 7B model produced no uncited answer and no leak, so nothing
+  was withheld. The evidence that the guard catches the cases is its 23 unit tests and the replay
+  over 329 stored answers, which flagged only the 3.3 leak (G-ADV-001).
+- **Still off by default.** Turning it on for the API and for the release candidate is a later
+  step under D-7, after the other guardrails and M6.
+
+### Next
+
+3.9b: look at the top-1 retrieval scores of the 32 answerable and 12 refusal dev items before
+building a refusal floor, with a rule written first.
 ## Guardrails: plan and pre-registered rule for 3.9a
 
 Written 2026-11-27, after D-5 to D-9 were accepted. The Phase 3 guardrail work is split into

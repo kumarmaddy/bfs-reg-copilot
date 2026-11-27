@@ -1076,3 +1076,39 @@ say so and will treat T as provisional until M6 and the hold-out are in.
 **Reported regardless of verdict.** The two score distributions, the lowest answerable items
 (these are also the items with the weakest retrieval), the highest refusal items, the number of
 refusals below L itself (no margin), and the rank-based separation (AUC) as a description only.
+
+## Experiment 3.9b result: refusal floor
+
+**Verdict under the pre-registered rule: no floor is built in this phase.** Top-1 dense (bge-m3,
+cosine) scores of the dev questions: 32 answerable, 12 refusal. No model call, no hold-out.
+
+| Quantity | Answerable (32) | Refusal (12) |
+|---|---|---|
+| Minimum | 0.4529 (G-B10-002) | 0.4243 (G-X-U10) |
+| Median | 0.6557 | 0.5686 |
+| Maximum | 0.7745 | 0.6637 (G-X-U08) |
+
+Rule: T = lowest answerable score minus 0.02 = 0.4329; refusals below T = 1 of 12; 6 were needed.
+Without the margin, 1 of 12 sits below the lowest answerable item. AUC 0.80, descriptive only.
+
+### Reading
+
+- **The distributions overlap.** The highest refusal items (0.66, 0.64, 0.62, 0.61) score above
+  the typical answerable item. Nine of the 12 refusals are near-misses, which is the case this
+  record said no score threshold can catch; the result confirms it.
+- **One answerable item sets the threshold.** G-B10-002 (0.4529) is an outlier; the next lowest is
+  0.5343. Raising T to fit that gap is a choice made after seeing the data and would cost an
+  answerable item, so it is not done here. For the record only: a threshold just under 0.5343
+  would catch 4 of 12 refusals and withhold G-B10-002.
+- **Retrieval signal is weak as a gate.** The weakest answerable items are also the ones the
+  model finds hardest, so a floor would trade answerable questions for few refusals.
+- **Refusal behaviour stays with the model, the prompt and the output guard.** The reference run
+  refuses 12 of 12 on dev; the open risk is hold-out and production questions, which M2 on the
+  hold-out will measure once.
+- **If revisited**, the right data is more refusal items, especially off-corpus ones, not a
+  better threshold on 12.
+
+### Next
+
+3.9c: a fixture so G-ADV-003 (injection in a retrieved chunk) can be scored, and a read-only scan
+of the curated corpus for instruction-like text.

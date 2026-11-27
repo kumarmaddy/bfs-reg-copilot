@@ -3,11 +3,16 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal, Protocol
+from typing import Final, Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict
 
 from bfs_reg_copilot.eval.gold import Split
+
+# Why the output guard withheld an answer (`PipelineAnswer.guard`). Defined here so the report
+# can count them without depending on the generator.
+GUARD_UNCITED: Final = "uncited"
+GUARD_LEAK: Final = "instruction_leak"
 
 
 class _Frozen(BaseModel):
@@ -15,12 +20,14 @@ class _Frozen(BaseModel):
 
 
 class PipelineAnswer(_Frozen):
-    """One answer. `retrieved_chunks` is ranked, best first; `cited_chunks` are chunk ids."""
+    """One answer. `retrieved_chunks` is ranked, best first; `cited_chunks` are chunk ids.
+    `guard` is empty unless the output guard withheld the model's answer, then it says why."""
 
     text: str
     refused: bool
     cited_chunks: tuple[str, ...] = ()
     retrieved_chunks: tuple[str, ...] = ()
+    guard: str = ""
 
 
 class Pipeline(Protocol):

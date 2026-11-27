@@ -98,6 +98,11 @@ def _build_parser() -> argparse.ArgumentParser:
         help="answer budget; default 512. A reasoning model spends it on thinking first",
     )
     run.add_argument(
+        "--guard",
+        action="store_true",
+        help="withhold uncited answers and answers that repeat the rules (baseline only; recorded)",
+    )
+    run.add_argument(
         "--no-think",
         action="store_true",
         help="ask a reasoning model not to think first (recorded in the run's settings)",
@@ -191,6 +196,9 @@ def _run(gold: GoldSet, args: argparse.Namespace) -> int:
     if args.gold_context and (args.pipeline != BASELINE or split != Split.DEV):
         print("ERROR --gold-context works only with `--pipeline baseline` on the dev split")
         return EXIT_INVALID
+    if args.guard and args.pipeline != BASELINE:
+        print("ERROR --guard works only with `--pipeline baseline`")
+        return EXIT_INVALID
     if args.pipeline == BASELINE:
         return _run_baseline(gold, args, split)
     return _finish_run(gold, args, split, DOUBLES[args.pipeline](gold))
@@ -203,6 +211,7 @@ def _run_baseline(gold: GoldSet, args: argparse.Namespace, split: Split) -> int:
 
     from bfs_reg_copilot.gateway.types import GatewayError
     from bfs_reg_copilot.rag.factory import build_baseline
+    from bfs_reg_copilot.rag.guard import GuardedPipeline
     from bfs_reg_copilot.rag.pipeline import MAX_ANSWER_TOKENS
     from bfs_reg_copilot.retrieve.gold_context import gold_context_map
     from bfs_reg_copilot.store.db import connect, database_url, describe
@@ -228,6 +237,7 @@ def _run_baseline(gold: GoldSet, args: argparse.Namespace, split: Split) -> int:
                 gold_context_map(gold) if args.gold_context else None,
                 False if args.no_think else None,
                 args.max_answer_tokens or MAX_ANSWER_TOKENS,
+                args.guard,
             )
             pipeline.check_ready()
         except GatewayError as exc:
@@ -235,7 +245,13 @@ def _run_baseline(gold: GoldSet, args: argparse.Namespace, split: Split) -> int:
             return EXIT_UNREADABLE
         code = _finish_run(gold, args, split, pipeline, progress=_print_progress)
         print(f"malformed model outputs: {pipeline.malformed}")
-        usage = pipeline._gateway.usage
+        if isinstance(pipeline, GuardedPipeline):
+            held = pipeline.counts
+            print(
+                f"guard withheld {held.blocked} answers "
+                f"(uncited {held.uncited}, instruction leak {held.instruction_leak})"
+            )
+        usage = pipeline.usage
         print(
             f"model calls: {usage.calls}, prompt tokens {usage.prompt_tokens}, "
             f"completion tokens {usage.completion_tokens}, model time {usage.seconds:.0f}s"

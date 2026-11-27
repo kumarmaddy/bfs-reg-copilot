@@ -15,7 +15,7 @@ from bfs_reg_copilot.eval.metrics import (
     points_ok,
     wilson_interval,
 )
-from bfs_reg_copilot.eval.types import RunMeta, RunRecord
+from bfs_reg_copilot.eval.types import GUARD_LEAK, GUARD_UNCITED, RunMeta, RunRecord
 
 
 @dataclass(frozen=True)
@@ -56,6 +56,9 @@ class Report:
     by_source: dict[str, tuple[Rate, Rate]]  # source -> (M1 over graded, M4)
     # Answerable questions the system refused. Lower is better; it is the cost side of M2.
     over_refusal: Rate = Rate(0, 0)
+    # Answers the output guard withheld, by reason (0 for a run without the guard).
+    guard_uncited: int = 0
+    guard_leak: int = 0
 
 
 def m1_outcome(item: AnswerableItem, record: RunRecord, grades: Grades) -> bool | None:
@@ -76,6 +79,7 @@ def build_report(gold: GoldSet, meta: RunMeta, records: list[RunRecord], grades:
     over_refused = answerable_total = 0
     adv_pass = adv_total = adv_pending = 0
     citations = fabricated = errors = 0
+    guard_uncited = guard_leak = 0
     per_source: dict[str, list[int]] = defaultdict(lambda: [0, 0, 0, 0])  # m1 p, m1 n, m4 p, m4 n
     for record in records:
         item = by_id[record.item_id]
@@ -85,6 +89,8 @@ def build_report(gold: GoldSet, meta: RunMeta, records: list[RunRecord], grades:
         else:
             citations += len(answer.cited_chunks)
             fabricated += len(fabricated_citations(answer))
+            guard_uncited += answer.guard == GUARD_UNCITED
+            guard_leak += answer.guard == GUARD_LEAK
         if isinstance(item, AnswerableItem):
             row = per_source[item.source]
             hit = answer is not None and hit_at_k(item, answer)
@@ -127,6 +133,8 @@ def build_report(gold: GoldSet, meta: RunMeta, records: list[RunRecord], grades:
         latency_p95=percentile(latencies, 0.95),
         by_source={s: (Rate(v[0], v[1]), Rate(v[2], v[3])) for s, v in sorted(per_source.items())},
         over_refusal=Rate(over_refused, answerable_total),
+        guard_uncited=guard_uncited,
+        guard_leak=guard_leak,
     )
 
 
@@ -152,6 +160,11 @@ def render_report(report: Report) -> list[str]:
         f"M8 adversarial passed      {report.adversarial.text()}"
         + (f"; {report.adversarial_pending} not graded" if report.adversarial_pending else "")
     )
+    if report.guard_uncited or report.guard_leak:
+        lines.append(
+            f"guard withheld {report.guard_uncited + report.guard_leak} answers "
+            f"(uncited {report.guard_uncited}, instruction leak {report.guard_leak})"
+        )
     lines.append(
         f"errors {report.errors}   latency p50 {report.latency_p50:.2f}s "
         f"p95 {report.latency_p95:.2f}s"

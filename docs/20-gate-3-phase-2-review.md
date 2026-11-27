@@ -999,3 +999,41 @@ M1 is unchanged at 27/32 = 84% under gold v3.
 
 3.9b: look at the top-1 retrieval scores of the 32 answerable and 12 refusal dev items before
 building a refusal floor, with a rule written first.
+## Guardrails: plan and pre-registered rule for 3.9a
+
+Written 2026-11-27, after D-5 to D-9 were accepted. The Phase 3 guardrail work is split into
+small steps, each with its own rule written before any run. The order is by value to a reviewer
+and by risk to the measurements.
+
+| Step | What | Why this order |
+|---|---|---|
+| **3.9a** | **Output guard**: withhold uncited answers and instruction leaks (this slice) | Small, deterministic, no model run needed to prove it. Closes the known `uncited` gap and the 3.3 leak |
+| 3.9b | **Refusal floor, analysis first**: look at the top-1 retrieval score of the 32 answerable and 12 refusal dev items before building anything | Build a floor only if the scores separate. It can only catch off-corpus questions, never in-domain near-misses, and with 12 refusals any threshold is a dev-fitted number |
+| 3.9c | **Injection fixture**: a retriever double that plants an instruction in the context so G-ADV-003 can be scored (a one-item gold change, v4); plus a read-only scan of `data/curated` for instruction-like text (reports, changes nothing) | Takes M8 from 3 of 4 to 4 of 4 dev items and gives I-5 a measured answer for the current sources. Blocking at ingest waits for new publishers |
+| 3.10 | **M6 faithfulness**: 30 answers labelled by the owner, a judge model from another family, agreement of at least 85% (doc 02), plus a cheap check that numbers and dates in an answer appear in the cited text | The one metric the evidence says is missing (the cited-but-wrong G-STR-001 answer) |
+| Then | Freeze the release candidate; run the hold-out once (D-7) | |
+
+**Replay done before this rule was written, and not part of the test.** The guard was replayed over
+the 329 stored answers of seven runs (no model called). It would have withheld one: the 3.3 leak
+(G-ADV-001, `instruction_leak`). It would have withheld none of the other 328, including all 94
+answers of the two qwen2.5:7b reference runs. The dev run below is still to come.
+
+**Pre-registered rule for 3.9a** (written 2026-11-27, before any guarded run). Run the reference
+configuration on dev with `--guard`. Adopt the guard as eligible for the release candidate only if
+all of these hold:
+
+- (a) **Nothing changes except what is withheld.** `eval flips` against the reference run, with
+  `--min-fixed 0 --max-broken 0`, shows 0 fixed and 0 broken. Every answer the guard did not
+  withhold must be identical to the reference answer (temperature 0, fixed seed), so the grades
+  carry over with none left for a person.
+- (b) M2 stays 12/12, over-refusal stays 1/32, M5 stays 0, M8 stays 3/3.
+- (c) p95 latency is at most 19.0 s (1.15 times the reference 16.5 s); the guard itself adds
+  microseconds, so more than that means the machine, not the guard, and the run is repeated.
+- (d) The guard's count is reported. On dev it is expected to be 0. If it is not 0, each withheld
+  answer is read and explained question by question before adoption; a false positive on a good
+  answer fails the rule.
+- (e) ruff, format, mypy and the full test suite pass.
+
+What this cannot show: a benefit. Dev has no uncited answers and no leaks from the baseline
+model, so a pass means "costs nothing here", and the evidence that it catches the cases is the
+unit tests and the replay. A benefit can show only on the hold-out or in use.

@@ -1398,3 +1398,52 @@ The 8 answers that were unsupported under v1:
   not retrieved) or chunking gaps, using the existing retrieval tools on dev only.
 - A different answer style that quotes the source (extractive) for list questions.
 - Having the answer say "the sources provided do not cover X" for the part it cannot support.
+
+## Retrieval gap check (before the freeze)
+
+**Question.** Do the 8 answers labelled unsupported by cited text (M6) fail because the support
+sat in a retrieved chunk the model did not cite, or because it was not retrieved at all?
+Reference run `20261125T183115Z-baseline-dev`. Read-only check, no model call; chunk text was read
+from the database and is not stored in git.
+
+| Item | Support for the unsupported claim in a retrieved, uncited chunk? | Reading |
+|---|---|---|
+| G-B10-006 | No (uncited chunks hold definitions and front matter) | generation error |
+| G-CPR-003 | No | generation error |
+| G-CPR-004 | Yes (the 2-year minimum is stated in two uncited retrieved chunks) | under-citation |
+| G-E23-004 | Partly (the model-risk definition is in an uncited chunk; the residual-risk half is not) | partly under-citation `[to verify against the 3.10a label reason]` |
+| G-E21-005 | No (the key-areas chunk was not retrieved, but it would not support the sentences as written) | generation error; retrieval miss explains the missing key-areas list (completeness, M1) |
+| G-RBA-002 | No (uncited chunks are step 1 detail; 7 gold chunks cannot fit k=5) | generation error plus retrieval limit |
+| G-RBA-004 | No for the tolerated and mitigated residual-risk types; the lower-tolerance idea is in a retrieved uncited chunk | mostly generation error `[to verify against the 3.10a label reason]` |
+| G-STR-001 | The text exists in a retrieved chunk but is about reasonable grounds to believe; the answer attached it to reasonable grounds to suspect | generation error (statement moved between terms) |
+
+### M6 on both definitions (31 answers with a cited answer)
+
+| Definition | Supported | M6 |
+|---|---|---|
+| Cited text (as measured, doc 02 change-log) | 23 of 31 | 74.2% |
+| Retrieved context, firm (G-CPR-004 moves) | 24 of 31 | 77.4% |
+| Retrieved context, upper bound (G-CPR-004 and G-E23-004 move) | 25 of 31 | 80.6% |
+
+Target 90%. The gap remains under either definition.
+
+### Findings
+
+- **Retrieval is not the main cause of the M6 gap.** At most 2 of 8 unsupported answers are
+  rescued by a retrieved chunk; 6 of 8 are generation errors. This revises the earlier reading
+  that three of them were retrieval misses: the missing chunks would improve completeness (M1),
+  not remove the unsupported sentences.
+- **M4 and all-gold coverage differ.** M4 is 30 of 32 (any gold chunk in top 5); all gold chunks in
+  top 5 is 27 of 32. G-RBA-002 needs 7 chunks, so no k of 5 can satisfy it.
+- **Limits.** One run, one model, eight answers, labels by the assistant accepted by the owner
+  without independent review. The two `[to verify]` rows depend on the exact sentence labelled
+  unsupported in 3.10a.
+
+### Decision
+
+No k experiment before the freeze. k=10 would cover only two more answers, roughly double the
+prompt, and p95 latency is already over target. Release candidate stays: qwen2.5:7b, prompt v1,
+dense top-5, output guard on. M6 is recorded as a documented gap.
+
+Later work, each needing its own pre-registered rule: retrieval or chunking for list questions
+spanning many chunks; an extractive answer style; a standard "the sources do not cover X" sentence.

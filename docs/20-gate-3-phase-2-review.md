@@ -1037,3 +1037,42 @@ all of these hold:
 What this cannot show: a benefit. Dev has no uncited answers and no leaks from the baseline
 model, so a pass means "costs nothing here", and the evidence that it catches the cases is the
 unit tests and the replay. A benefit can show only on the hold-out or in use.
+
+## Guardrails: plan and pre-registered rule for 3.9b (refusal floor)
+
+Written before the analysis is run. Nothing here uses the hold-out.
+
+**Question.** Does the top-1 dense retrieval score (cosine similarity, bge-m3) separate the dev
+questions the corpus can answer from the dev questions it cannot, well enough to justify a
+deterministic "refusal floor": if the best retrieved chunk scores below a threshold T, answer with
+the fixed refusal and skip the model?
+
+**Why it is worth asking, and what it cannot do.** On dev the reference run already refuses 12 of
+12 refusal items, so a floor cannot raise M2 there. Its value would be defence in depth: a
+deterministic stop that does not depend on the model choosing to refuse. It can only catch
+off-corpus questions. A near-miss (an in-domain question whose answer is not in the corpus)
+retrieves relevant-looking chunks and will not be caught by any score threshold. That limit is
+stated here so a partial result is not read as a failure.
+
+**Data.** The top-1 cosine similarity of every dev question: 32 answerable, the dev refusal items
+(12 at gold v2), reported with near-miss refusals marked. Dev adversarial items are listed for
+information and are not used to choose T. No model call; the query embedding only.
+
+**Rule (fixed now).**
+1. Let L be the lowest top-1 score among the 32 answerable dev items. Candidate T = L - 0.02.
+   The 0.02 margin is a round number chosen before looking, as protection against ordinary
+   variation on unseen questions. It is not tuned.
+2. A floor is built only if, at that T, at least 6 of the dev refusal items (half of 12) score
+   below T. Zero answerable items can fall below T by construction, so over-refusal cannot rise.
+3. If fewer than 6 do, no floor is built in this phase. The finding is recorded as it is, with
+   the overlap, and the refusal behaviour stays with the model and the guard.
+4. T is never moved after the hold-out is seen, and the hold-out is not used to choose it.
+
+**If a floor is built (3.9b-2).** It is off by default, recorded in run settings with its T, and
+the release-candidate dev run must show 0 flips against the reference run, M2 12/12, over-refusal
+1/32, and p95 at most 19.0 s. A floor decided on 12 refusal items is weak evidence; the ADR will
+say so and will treat T as provisional until M6 and the hold-out are in.
+
+**Reported regardless of verdict.** The two score distributions, the lowest answerable items
+(these are also the items with the weakest retrieval), the highest refusal items, the number of
+refusals below L itself (no margin), and the rank-based separation (AUC) as a description only.

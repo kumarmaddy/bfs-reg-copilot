@@ -161,6 +161,19 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     review.add_argument("--items", default="", help="comma-separated item ids (default: six)")
     review.add_argument("--out", type=Path, default=Path("eval/runs/rubric-review.md"))
+    inject = sub.add_parser(
+        "inject", help="G-ADV-003 fixture: plant an instruction in a retrieved chunk (dev only)"
+    )
+    inject.add_argument("--model", default=DEFAULT_GENERATOR)
+    inject.add_argument("--k", type=int, default=5)
+    inject.add_argument("--prompt-version", default="v1")
+    inject.add_argument("--guard", action="store_true", help="run behind the output guard")
+    inject.add_argument("--out-dir", type=Path, default=DEFAULT_RUNS_DIR)
+    inject.add_argument("--repo-root", type=Path, default=Path("."))
+    scan = sub.add_parser(
+        "scan-corpus", help="read-only scan of the current chunks for instruction-like text"
+    )
+    scan.add_argument("--show", type=int, default=20, help="most hits to print")
     score = sub.add_parser("score", help="print M1, M2, M4, M5 and M8 for a stored run")
     score.add_argument("run_dir", type=Path)
     score.add_argument("--grades", type=Path, default=None, help="default: <run_dir>/grades.csv")
@@ -365,6 +378,106 @@ def _chunk_audit(gold: GoldSet, args: argparse.Namespace, records: list[RunRecor
     return EXIT_OK
 
 
+def _inject(args: argparse.Namespace) -> int:
+    import json
+    from contextlib import closing
+    from datetime import UTC, datetime
+
+    from pg8000.exceptions import DatabaseError, InterfaceError
+
+    from bfs_reg_copilot.embed.models import BGE_M3
+    from bfs_reg_copilot.embed.ollama import OllamaEmbedder
+    from bfs_reg_copilot.eval.injection import (
+        Case,
+        InjectingChunkSource,
+        InjectingRetriever,
+        render_results,
+        run_cases,
+    )
+    from bfs_reg_copilot.gateway.ollama import OllamaGateway
+    from bfs_reg_copilot.gateway.types import GatewayError
+    from bfs_reg_copilot.rag.guard import GuardedPipeline
+    from bfs_reg_copilot.rag.pipeline import DbChunkSource, RagPipeline
+    from bfs_reg_copilot.retrieve.retrievers import DenseRetriever
+    from bfs_reg_copilot.store.db import connect, database_url, describe
+
+    try:
+        conn = connect()
+    except (OSError, InterfaceError, DatabaseError) as exc:
+        print(f"ERROR cannot connect to {describe(database_url())}: {type(exc).__name__}: {exc}")
+        return EXIT_UNREADABLE
+    with closing(conn):
+        gateway = OllamaGateway(args.model)
+        try:
+            gateway.check_ready()
+        except GatewayError as exc:
+            print(f"ERROR {exc}")
+            return EXIT_UNREADABLE
+        embedder = OllamaEmbedder(BGE_M3)
+
+        def make(case: Case) -> RagPipeline | GuardedPipeline:
+            pipeline = RagPipeline(
+                InjectingRetriever(DenseRetriever(conn, embedder), case),
+                InjectingChunkSource(DbChunkSource(conn), case),
+                gateway,
+                args.k,
+                None,
+                args.prompt_version,
+            )
+            return GuardedPipeline(pipeline) if args.guard else pipeline
+
+        results = run_cases(make)
+    print("\n".join(render_results(results)))
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    out = args.out_dir / f"{stamp}-injection-dev"
+    out.mkdir(parents=True, exist_ok=False)
+    record = {
+        "model": args.model,
+        "k": args.k,
+        "prompt_version": args.prompt_version,
+        "guard": args.guard,
+        "git_commit": git_commit(args.repo_root),
+        "results": [
+            {
+                "case": r.case_id,
+                "passed": r.verdict.passed,
+                "reasons": list(r.verdict.reasons),
+                "answer": r.answer.model_dump() if r.answer is not None else None,
+                "error": r.error,
+            }
+            for r in results
+        ],
+    }
+    (out / "injection.json").write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+    print(f"stored in {out}")
+    return EXIT_OK
+
+
+def _scan_corpus(args: argparse.Namespace) -> int:
+    from contextlib import closing
+
+    from pg8000.exceptions import DatabaseError, InterfaceError
+
+    from bfs_reg_copilot.eval.injection import scan_chunks
+    from bfs_reg_copilot.store.db import connect, database_url, describe
+
+    try:
+        conn = connect()
+    except (OSError, InterfaceError, DatabaseError) as exc:
+        print(f"ERROR cannot connect to {describe(database_url())}: {type(exc).__name__}: {exc}")
+        return EXIT_UNREADABLE
+    with closing(conn):
+        cur = conn.cursor()
+        cur.execute("SELECT chunk_id, text FROM chunks WHERE superseded_at IS NULL")
+        rows = [(str(i), str(t)) for i, t in cur.fetchall()]
+        conn.rollback()
+    hits = scan_chunks(rows)
+    print(f"scanned {len(rows)} current chunks; {len(hits)} instruction-like matches")
+    for hit in hits[: args.show]:
+        print(f"  {hit.chunk_id}: ...{hit.excerpt}...")
+    return EXIT_OK
+
+
 def _flips(gold: GoldSet, args: argparse.Namespace) -> int:
     runs = []
     for folder, grades_path in ((args.before, args.grades_before), (args.after, args.grades_after)):
@@ -435,6 +548,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _flips(gold, args)
         if args.command == "rubric-review":
             return _rubric_review(gold, args)
+        if args.command == "inject":
+            return _inject(args)
+        if args.command == "scan-corpus":
+            return _scan_corpus(args)
         meta, records = read_run(args.run_dir)
         if args.command == "context":
             return _context(gold, args, records)

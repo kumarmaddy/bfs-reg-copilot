@@ -81,3 +81,4 @@ These exist so the design is tested against something. Re-set them after the bas
 | 2026-11-08 | Initial targets M1 to M3 accepted by the owner; M4 to M10 and S1 to S4 proposed | Gate 0 | Project owner |
 | 2026-11-25 | The hold-out is first run at Gate 4 (end of Phase 3), once per release candidate, not at Gate 3 | Baseline is untuned and not expected to meet targets; doc 06 already places the hold-out target in Phase 3 | Project owner |
 | 2026-11-18 | M5, M8 and M9 accepted; M4, M6, M7 and M10 stay proposed until the Phase 2 baseline | Integrity targets can be judged now; performance targets need a baseline | Project owner |
+| 2026-11-27 | M6 is measured against the cited text (stricter than "retrieved context"); recorded in doc 20 (3.10a) | A reader checks an answer against its citations | Project owner |

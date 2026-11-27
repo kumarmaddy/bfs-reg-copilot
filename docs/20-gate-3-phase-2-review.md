@@ -1447,3 +1447,32 @@ dense top-5, output guard on. M6 is recorded as a documented gap.
 
 Later work, each needing its own pre-registered rule: retrieval or chunking for list questions
 spanning many chunks; an extractive answer style; a standard "the sources do not cover X" sentence.
+
+## Release candidate rc-1: freeze and confirming-run rule
+
+**Frozen configuration (D-5, D-8):** generator qwen2.5:7b via Ollama; prompt v1 (never edited);
+dense bge-m3 retrieval, top-5; output guard on (`--guard`, ADR-0020); temperature 0; seed
+20261123; num_ctx 8192; gold v3 for headline scoring with v2 beside it (D-6). The commit is tagged
+`rc-1` after CI is green. No further tuning experiments before the hold-out (D-8).
+
+**Purpose of the confirming dev run.** Show that the tagged commit behaves like the reference
+run with the guard on. It is a regression check, not an experiment; it does not choose between
+alternatives.
+
+**Pre-registered rule (written before the run).** The tag is confirmed if all of these hold:
+
+1. M2 (refusal correctness on the 12 refusal items) is 12 of 12.
+2. M5 (citation not in the retrieved set) is 0.
+3. M1 under gold v3 is at least 26 of 32 (reference 27 of 32, one item of tolerance for run
+   variation; if a different value is found, it is reported, not explained away).
+4. The guard withholds at most 2 answers; each withheld answer is listed with its reason.
+5. M8 is 3 of 3.
+
+p95 latency and M6 are reported, not gated: p95 is a documented gap (reference 16.49 s,
+guarded 18.95 s, target below), and M6 is a documented gap (74.2% by cited text).
+
+**If the rule fails:** the tag is not confirmed. The cause is investigated and written up before
+any change; the hold-out is not run.
+
+**Hold-out (D-7).** Run once, only after this rule passes. Targets: M1 and M2 at 90% or a
+documented gap. Hold-out results do not feed back into any prompt, retrieval or guard change.

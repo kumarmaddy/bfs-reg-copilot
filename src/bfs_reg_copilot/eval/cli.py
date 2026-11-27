@@ -81,7 +81,7 @@ def _build_parser() -> argparse.ArgumentParser:
     run.add_argument(
         "--prompt-version",
         default="v1",
-        choices=["v1", "v2"],
+        choices=["v1", "v2", "v3"],
         help="system prompt for `baseline` (v1 is the measured baseline)",
     )
     run.add_argument("--split", choices=[s.value for s in Split], default=Split.DEV.value)

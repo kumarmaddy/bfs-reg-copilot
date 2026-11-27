@@ -1279,3 +1279,55 @@ cross-reference (F-17), a dropped condition (F-12), and wording that goes slight
 
 1. Accept M6 as a documented gap alongside M1 for Gate 4, or open a faithfulness experiment first.
 2. Decide when the independent review of the labels happens.
+
+## Experiment 3.11: faithfulness prompt (v3), plan and pre-registered rule
+
+Written before the run. Dev only; the hold-out is not used. One attempt.
+
+**Why.** M6 on the reference dev run is 23 of 31 (74.2 percent) against a 90 percent target (see
+the 3.10a result). The unsupported answers add content the cited text does not state: an added
+definition, steps assembled from nearby sentences, a statement moved from one term to another, a
+dropped condition. Prompt v1 already says to use only the sources; this tests whether stating the
+sentence-level requirement more directly reduces it.
+
+**The one change.** Prompt v3 is v1 plus one new rule 4: every sentence of the answer must be
+stated in a source the answer cites; add nothing from outside knowledge; say about each thing only
+what the sources say about that same thing and keep any condition the source attaches; if the
+sources cover only part of the question, answer that part and say which part is not covered. The
+refusal, injection and secrecy rules are word-for-word the same as v1. It is built on v1, not v2,
+so it does not also ask for longer answers. The model, retrieval and all settings are the
+reference's: qwen2.5:7b, dense bge-m3 top-5, temperature 0, seed 20261123, num_ctx 8192, output
+guard off, run once on dev as `eval run baseline --prompt-version v3`.
+
+**How it is judged.** M6 labels for the new run are made the same way as for the reference run
+(the 3.10a procedure, with the same limits: the assistant's labels read and accepted by the owner,
+no independent review). An answer identical to the reference answer keeps its label. M1 grades
+come from the usual grade sheet, again carrying grades for identical answers. Scoring uses gold v3.
+Doc 20 compares against the reference run `20261125T183115Z-baseline-dev`.
+
+**Adopt v3 for the release candidate only if ALL of these hold (fixed now).**
+1. At least 3 of the 8 answers labelled unsupported in the reference run (G-B10-006, G-CPR-003,
+   G-CPR-004, G-E21-005, G-E23-004, G-RBA-002, G-RBA-004, G-STR-001) become supported. Becoming a
+   refusal does not count as fixed.
+2. None of the 23 answers labelled supported in the reference run becomes unsupported.
+3. M1 under gold v3 stays at 26 of 32 or better and no more than 1 answer is broken.
+4. Over-refusal rises by at most 1 (to 2 of 32 at most). M2 stays 12 of 12, M5 0, M8 3 of 3.
+5. p95 is at most 19.0 s.
+
+The `eval flips` verdict line is not the decision here: its generic message is built for a larger
+net gain. The five conditions above are.
+
+**Also reported, whatever the verdict.** M6 among answers given and M6 over all 32 answerable
+items (a refusal counts as not a supported answer), so more refusals cannot make M6 look better
+than it is; the answers that changed, with their text; the new unsupported answers if any.
+
+**Stop rule.** One attempt. The v3 wording is not edited after the run. If any condition fails,
+prompt v1 stays the release-candidate prompt and the M6 gap is recorded as final for this phase,
+with the v3 result as the evidence that a prompt change does not close it. A second run is allowed
+only to confirm that the first is reproducible (same settings), and both runs are kept.
+
+**Limits stated in advance.** 31 answers, so one answer is 3.2 points and a small change could be
+chance, which is why the rule asks for per-answer movement and a margin and not only a percentage.
+The hold-out has 8 answerable items and cannot measure faithfulness, so the claim afterwards is
+"reduced on dev", never "solved". A stricter prompt can raise refusals; condition 4 is there for
+that.

@@ -676,3 +676,117 @@ rule with fewer than about six net flips is "promising, not proven".
 chance. Meeting the rule makes a variant a shortlist entry for confirmation, not an adoption:
 confirmation needs a repeat on the same dev set under the Phase 4 serving settings and, at the
 Gate, one use of the hold-out. Report all variants, including those that fail or are skipped.
+
+## Experiment 3.7 result: model comparison
+
+**Verdict: not adopted. qwen2.5:7b stays as the baseline generator.** One
+variant survived Stage 1 (qwen3:14b with thinking off). It fixed 3 questions
+and broke 1, against the pre-registered bar of at least 4 fixed and at most 1
+broken. Everything below is on the dev split, gold v2, prompt v1, k=5 dense
+retrieval, temperature 0, seed 20261123. Only the generating model (and the
+thinking switch) changed. Retrieval hit@5 was identical in every run (30/32),
+which confirms that.
+
+### What was run
+
+Bake-off folder `eval\runs\bakeoff\20261126-2056`, reference run
+`20261125T183115Z-baseline-dev` (qwen2.5:7b). Reasoning models (detected from
+the Ollama `capabilities` list) ran twice: thinking on with a 3500-token
+answer budget, and thinking off with the usual 512. Other models ran once at
+512. A 3-question calibration set the time budget first; each full run was
+capped at 90 minutes (none came close). Total time for the seven full runs was
+about 186 minutes.
+
+| Variant | s/item (calibration) | Full run | p50 / p95 |
+|---|---|---|---|
+| gemma3:12b plain | 30.3 | 20.2 min | 25.2 / 33.9 s |
+| phi4:14b plain | 35.0 | 19.6 min | 24.7 / 33.9 s |
+| gemma4:12b think | 68.6 | 44.4 min | 51.6 / 105.2 s |
+| gemma4:12b nothink | 26.7 | 18.0 min | 22.6 / 31.6 s |
+| qwen3.5:9b think | 251.3 | not run | skipped at calibration |
+| qwen3.5:9b nothink | 11.1 | 11.4 min | 14.0 / 19.4 s |
+| qwen3:14b think | 75.6 | 54.4 min | 62.8 / 99.3 s |
+| qwen3:14b nothink | 18.1 | 17.9 min | 22.6 / 31.5 s |
+
+The qwen3.5:9b thinking variant was skipped because its calibration run was
+not clean (output cut off) and projected to about 197 minutes. That is a
+statement about this 3500-token budget and this hardware, not about the
+model's quality.
+
+### Stage 1 (automatic metrics only)
+
+Drop if any of: item errors above 0, malformed above 2, M5 above 0,
+over-refusal above 2/32, M2 below the reference (12/12).
+
+| Variant | Over-refusal (ref 1/32) | M2 | M5 | Outcome |
+|---|---|---|---|---|
+| gemma3:12b plain | 1/32 | 11/12 | 0 | Dropped (M2) |
+| phi4:14b plain | 4/32 | 12/12 | 0 | Dropped |
+| gemma4:12b think | 4/32 | 12/12 | 0 | Dropped |
+| gemma4:12b nothink | 4/32 | 12/12 | 0 | Dropped |
+| qwen3.5:9b nothink | 3/32 | 12/12 | 0 | Dropped |
+| qwen3:14b think | 5/32 | 12/12 | 0 | Dropped |
+| qwen3:14b nothink | 2/32 | 12/12 | 0 | Survives |
+
+No variant had item errors. Variants with 4 or more refusals of answerable
+questions cannot reach the 29/32 needed for the 90% M1 target, because a
+refusal can never be a correct answer. Dropped variants were not graded
+for accuracy, as pre-registered, so nothing is claimed about their M1.
+
+### Stage 2: qwen3:14b nothink against the reference
+
+`eval flips`: 23 questions pass in both, 5 fail in both.
+
+- Fixed: G-B13-001, G-E21-001, G-STR-001.
+- Broken: G-B10-006 (only 2 of 4 required points).
+- Still failing in both: G-B10-001, G-CPR-004, G-E21-005, G-RBA-002,
+  G-STR-003.
+- Rule: (a) FAIL, 3 fixed and 1 broken; (b) PASS, no fabricated citations;
+  (c) PASS, refusals of answerable questions rose from 1 to 2; (d) PASS, p95
+  16.5 s to 31.5 s.
+- M1 26/32 = 81% (95% CI 65% to 91%) against 24/32 = 75% for the reference.
+  M2 12/12, M5 0/39, M8 3/3. Latency about double the reference at p50
+  (22.6 s against 11.5 s). The target is 29/32 (90%).
+
+### Thinking on against thinking off
+
+| Model | Thinking on | Thinking off |
+|---|---|---|
+| gemma4:12b | 44.4 min, p50 51.6 s, over-refusal 4/32 | 18.0 min, p50 22.6 s, over-refusal 4/32 |
+| qwen3:14b | 54.4 min, p50 62.8 s, over-refusal 5/32 | 17.9 min, p50 22.6 s, over-refusal 2/32 |
+
+Thinking cost 2.4 to 3 times the run time and did not reduce over-refusal; for
+qwen3:14b it raised it. Accuracy for thinking variants was not graded because
+they were dropped at Stage 1. This is a finding about cost and refusal
+behaviour only.
+
+### Caveats
+
+- The grades for qwen3:14b nothink were drafted by the assistant and adopted
+  by the owner. Three were judgment calls (G-B13-001, G-RBA-003, G-STR-004).
+  Overruling G-B13-001 would make it 2 fixed and 1 broken; the verdict does
+  not change.
+- G-E21-005 was answered but was not on the grade sheet; it is counted as a
+  fail in the 32 (its answer lists guidelines but not the key areas, and cites
+  B-13 and B-10 rather than E-21). Why the sheet omitted it is not yet
+  explained.
+- Seven variants were screened against one reference on 32 questions. With so
+  few questions, 3 fixed is within noise either way; the comparison is a
+  screen, not proof of equality.
+- Same-run effects were not repeated (one run per variant, temperature 0).
+- The reference grade for G-STR-001 now has contradicts = yes (its answer
+  swapped the suspect and believe definitions). That affects the reference
+  M1 and this comparison only by counting that item as a fail in the
+  reference, as was already the owner's agreed correction.
+- Models were added to the gateway allowlist for this experiment only. No
+  licence, model-risk or deployment review has been done for any candidate.
+
+### Reading
+
+Swapping the generator at this size does not close the M1 gap: the best case
+was 81% against a 90% target, at twice the latency. The five questions that
+fail in both runs split into retrieval and omission problems already
+diagnosed in 3.4, and the larger models mostly traded wrong answers for
+refusals. The remaining distance to the 90% target is a decision for the owner
+(target, rubric strictness or accepting the gap with the evidence recorded),
+not a tuning gap this experiment can close.
